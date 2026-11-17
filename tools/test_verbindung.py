@@ -77,6 +77,19 @@ def main() -> None:
     # Initialisieren: Displays aufwecken, Helligkeit setzen
     senden(geraet, CRT + b"DIS")
     senden(geraet, CRT + b"LIG\x00\x00" + bytes([60]))
+
+    # Optional: Gerätemodus setzen (Diagnose), z. B.  --modus 1
+    if "--modus" in sys.argv:
+        modus = int(sys.argv[sys.argv.index("--modus") + 1])
+        senden(geraet, CRT + b"MOD\x00\x00" + bytes([0x30 + modus]))
+        print(f"Modus {modus} gesetzt.")
+
+    # Displays übernehmen: alle Tastenbilder löschen und bestätigen (CLE + STP).
+    # Vermutung: Ohne das bleiben die Display-Tasten im Werks-Modus.
+    if "--ohne-cle" not in sys.argv:
+        senden(geraet, CRT + b"CLE\x00\x00\x00\xff")
+        senden(geraet, CRT + b"STP")
+        print("Displays geleert.")
     print("Verbunden. Drück Tasten, Knöpfe oder dreh an den Reglern … (Strg+C beendet)\n")
 
     letzter_keepalive = time.monotonic()
