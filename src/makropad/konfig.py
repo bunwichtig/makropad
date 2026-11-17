@@ -171,6 +171,13 @@ def _handler_fuer(konfig: KonfigServer):
                     return self._json({"ok": True})
                 except Exception as e:
                     return self._json({"fehler": str(e)}, 400)
+            if pfad == "/api/standard":
+                # Standardbelegung (mitgeliefert) wiederherstellen; alte Datei bleibt als .bak
+                with open(os.path.join(UI_ORDNER, "standard.json"), encoding="utf-8") as f:
+                    standard = json.load(f)
+                konfig.config_schreiben(standard)
+                log("Standardbelegung wiederhergestellt.")
+                return self._json(konfig.config_lesen())
             if pfad == "/api/bild":
                 daten = self._body()
                 if not daten.startswith(b"\x89PNG"):

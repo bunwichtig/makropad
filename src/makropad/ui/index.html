@@ -48,7 +48,8 @@
   .kopf canvas{width:60px;height:60px;border-radius:8px}
   .kopf .klein{font-size:12px;color:var(--leise)}
   .kopf .gross{font-size:20px;font-weight:600}
-  label.feld{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--leise);flex:1}
+  label.feld{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--leise)}
+  .zeile label.feld{flex:1 1 220px}
   .feld input,.feld select{font-size:14px;color:var(--text);background:var(--feld);border:1px solid var(--rand);border-radius:8px;padding:10px 12px;width:100%}
   .feld input.mono{font-family:Consolas,ui-monospace,monospace}
   .zeile{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
@@ -102,7 +103,7 @@
       <div class="nav-knoepfe" title="Die drei Knöpfe blättern durch die Seiten"><div>◀ Zurück</div><div>Vor ▶</div><div>Start</div></div>
     </div>
     <p class="hinweis">Klicke eine Taste oder einen Regler an, um ihn zu belegen.</p>
-    <button class="knopf klein" id="allgemein">Allgemein: Helligkeit</button>
+    <button class="knopf klein" id="allgemein">Allgemein: Helligkeit &amp; Standardbelegung</button>
   </section>
   <section id="editor" class="bereich" aria-label="Bearbeiten"></section>
 </main>
@@ -495,6 +496,10 @@ function allgemeinEditor(e) {
   r.oninput = () => { cfg.helligkeit = +r.value; wert.textContent = `${r.value} %`; geaendert(); };
   l.append(r); e.append(l);
   e.append(hinweis("Die drei Knöpfe unter den Tasten blättern durch die Seiten: links zurück, Mitte vor, rechts zur Startseite."));
+  e.append(trenner(), abschnitt("Standardbelegung"));
+  e.append(hinweis("Setzt alle Seiten, Tasten und Regler auf die eingerichtete Standardbelegung zurück (Mikro, Discord, EA, Ausgabe, Chrome links, Steam-Freunde; Regler: Discord, Gesamt, Battlefield). Die bisherige Datei bleibt als config.json.bak erhalten."));
+  e.append(zeile(knopf("Standardbelegung wiederherstellen", standardLaden, "knopf")));
+  e.append(trenner());
   if (cfg.seiten.length > 1) e.append(zeile(knopf(`Seite ${seite + 1} „${cfg.seiten[seite].name}“ löschen`, () => {
     if (confirm(`Seite „${cfg.seiten[seite].name}“ wirklich löschen?`)) { cfg.seiten.splice(seite, 1); seite = Math.max(0, seite - 1); alles(); }
   }, "knopf klein gefahr"), knopf("Seite umbenennen", () => seiteUmbenennen(seite))));
@@ -576,6 +581,14 @@ async function speichern() {
   } finally {
     knopfS.disabled = false; geaendert();
   }
+}
+async function standardLaden() {
+  if (!confirm("Wirklich alles auf die Standardbelegung zurücksetzen?\nDie aktuelle Belegung wird als config.json.bak gesichert.")) return;
+  const antwort = await api("/api/standard", {method: "POST"});
+  if (!antwort.ok) return meldung("Zurücksetzen fehlgeschlagen.", true);
+  await laden();
+  auswahl = {art: "taste", nr: 1}; alles();
+  meldung("Standardbelegung wiederhergestellt – das Pad ist aktualisiert.");
 }
 function meldung(text, fehler = false) {
   const m = document.getElementById("meldung");

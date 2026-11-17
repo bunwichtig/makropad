@@ -1,0 +1,146 @@
+{
+  "helligkeit": 60,
+  "navigation": {
+    "zurueck": 1,
+    "vor": 2,
+    "start": 3
+  },
+  "seiten": [
+    {
+      "name": "Start",
+      "tasten": {
+        "1": {
+          "name": "Mikrofon an/aus",
+          "aktion": {
+            "typ": "mikro",
+            "tastenkuerzel": "strg+umschalt+m"
+          }
+        },
+        "2": {
+          "name": "Discord nach vorne",
+          "anzeige": {
+            "text": "Discord",
+            "farbe": "#5865F2"
+          },
+          "aktion": {
+            "typ": "fokus",
+            "prozess": "Discord.exe",
+            "starten": "\"%LOCALAPPDATA%\\Discord\\Update.exe\" --processStart Discord.exe"
+          }
+        },
+        "3": {
+          "name": "EA App aus dem Tray",
+          "anzeige": {
+            "text": "EA",
+            "farbe": "#ff4747"
+          },
+          "aktion": {
+            "typ": "fokus",
+            "prozess": "EADesktop.exe",
+            "tray_klick": true
+          }
+        },
+        "4": {
+          "name": "Ausgabe: Boxen / Headset",
+          "aktion": {
+            "typ": "ausgabe_wechseln",
+            "geraete": [
+              {
+                "name": "Realtek",
+                "symbol": "lautsprecher",
+                "farbe": "#1e6fd9"
+              },
+              {
+                "name": "Sound Blaster",
+                "symbol": "headset",
+                "farbe": "#e76f00"
+              }
+            ]
+          }
+        },
+        "5": {
+          "name": "Chrome-Fenster links nach vorne",
+          "anzeige": {
+            "symbol": "browser_links",
+            "farbe": "#3c4043"
+          },
+          "aktion": {
+            "typ": "fokus_position",
+            "prozess": "chrome.exe",
+            "bereich": "links"
+          }
+        },
+        "6": {
+          "name": "Steam-Freundesliste nach vorne",
+          "anzeige": {
+            "symbol": "freunde",
+            "farbe": "#1b2838"
+          },
+          "aktion": {
+            "typ": "fokus",
+            "prozess": "steamwebhelper.exe",
+            "titel": [
+              "Freunde",
+              "Friends"
+            ],
+            "starten": "steam://open/friends"
+          }
+        }
+      }
+    },
+    {
+      "name": "Seite 2",
+      "tasten": {}
+    }
+  ],
+  "regler": {
+    "links": {
+      "name": "Discord-Lautstärke (drücken = stumm)",
+      "drehen": {
+        "typ": "app_lautstaerke",
+        "prozesse": [
+          "Discord.exe"
+        ],
+        "schritt": 0.02
+      },
+      "druecken": {
+        "typ": "app_stumm",
+        "prozesse": [
+          "Discord.exe"
+        ]
+      }
+    },
+    "mitte": {
+      "name": "Gesamtlautstärke (drücken = stumm)",
+      "drehen": {
+        "typ": "system_lautstaerke",
+        "schritt": 0.02
+      },
+      "druecken": {
+        "typ": "system_stumm"
+      }
+    },
+    "rechts": {
+      "name": "Battlefield-Lautstärke (drücken = stumm)",
+      "drehen": {
+        "typ": "app_lautstaerke",
+        "prozesse": [
+          "bf6.exe",
+          "BF2042.exe",
+          "bfv.exe",
+          "bf1.exe"
+        ],
+        "schritt": 0.02
+      },
+      "druecken": {
+        "typ": "app_stumm",
+        "prozesse": [
+          "bf6.exe",
+          "BF2042.exe",
+          "bfv.exe",
+          "bf1.exe"
+        ]
+      }
+    }
+  }
+}
