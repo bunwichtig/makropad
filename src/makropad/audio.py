@@ -122,3 +122,49 @@ def app_stumm_umschalten(prozesse: list[str]) -> bool | None:
     for vol in sitzungen:
         vol.SetMute(int(neu), None)
     return neu
+
+
+# ---------- Ausgabegerät wechseln ----------
+
+def _alle_ausgaben():
+    """Alle aktiven Wiedergabegeräte: [(id, Name)]."""
+    enum = comtypes.CoCreateInstance(
+        CLSID_MMDeviceEnumerator, IMMDeviceEnumerator, comtypes.CLSCTX_INPROC_SERVER
+    )
+    sammlung = enum.EnumAudioEndpoints(EDataFlow.eRender.value, 1)
+    ergebnis = []
+    for i in range(sammlung.GetCount()):
+        geraet = sammlung.Item(i)
+        try:
+            name = AudioUtilities.CreateDevice(geraet).FriendlyName or ""
+        except Exception:
+            name = ""
+        ergebnis.append((geraet.GetId(), name))
+    return ergebnis
+
+
+def ausgabe_namen() -> list[str]:
+    return [name for _, name in _alle_ausgaben()]
+
+
+def aktuelle_ausgabe() -> str:
+    """Name des aktuellen Standard-Wiedergabegeräts."""
+    enum = comtypes.CoCreateInstance(
+        CLSID_MMDeviceEnumerator, IMMDeviceEnumerator, comtypes.CLSCTX_INPROC_SERVER
+    )
+    standard_id = enum.GetDefaultAudioEndpoint(EDataFlow.eRender.value, ERole.eConsole.value).GetId()
+    for geraet_id, name in _alle_ausgaben():
+        if geraet_id == standard_id:
+            return name
+    return ""
+
+
+def ausgabe_setzen(suchtext: str) -> str | None:
+    """Macht das Wiedergabegerät, dessen Name suchtext enthält, zum Standard
+    (für normale Wiedergabe UND Kommunikation). Gibt den vollen Namen zurück oder None."""
+    for geraet_id, name in _alle_ausgaben():
+        if suchtext.lower() in name.lower():
+            AudioUtilities.SetDefaultDevice(
+                geraet_id, roles=[ERole.eConsole, ERole.eMultimedia, ERole.eCommunications])
+            return name
+    return None

@@ -31,6 +31,24 @@
         "prozess": "EADesktop.exe",
         "starten": "C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EADesktop.exe"
       }
+    },
+    "4": {
+      "name": "Ausgabe: Boxen / Headset",
+      "aktion": {
+        "typ": "ausgabe_wechseln",
+        "geraete": [
+          {
+            "name": "Realtek",
+            "symbol": "lautsprecher",
+            "farbe": "#1e6fd9"
+          },
+          {
+            "name": "Sound Blaster",
+            "symbol": "headset",
+            "farbe": "#e76f00"
+          }
+        ]
+      }
     }
   },
   "knoepfe": {},

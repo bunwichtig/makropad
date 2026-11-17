@@ -47,6 +47,7 @@ class App:
         self.config: dict = {}
         self.pad = Makropad()
         self.mikro_stumm: bool | None = None
+        self.ausgabe: str | None = None   # Name des aktuellen Wiedergabegeräts
         self._audio = None
         self._fenster = None
 
@@ -80,6 +81,8 @@ class App:
         aktion = taste.get("aktion", {})
         if aktion.get("typ") == "mikro":
             return bilder.mikro(bool(self.mikro_stumm))
+        if aktion.get("typ") == "ausgabe_wechseln":
+            return self._ausgabe_bild(aktion)
         anzeige = taste.get("anzeige")
         if not anzeige:
             return bilder.leer()
@@ -95,6 +98,39 @@ class App:
         for nummer in range(1, 7):
             self.pad.bild_setzen(nummer, self._bild_fuer(nummer), sofort=False)
         self.pad.anzeigen()
+
+    def _ausgabe_eintrag(self, aktion: dict) -> dict | None:
+        """Welcher Eintrag aus aktion['geraete'] ist gerade aktiv?"""
+        name = (self.ausgabe or "").lower()
+        for eintrag in aktion.get("geraete", []):
+            if eintrag["name"].lower() in name:
+                return eintrag
+        return None
+
+    def _ausgabe_bild(self, aktion: dict):
+        eintrag = self._ausgabe_eintrag(aktion)
+        if eintrag is None:
+            return bilder.text_kachel("?", "#555555")
+        return bilder.ausgabe_symbol(eintrag.get("symbol", ""), eintrag.get("farbe"),
+                                     eintrag.get("text", eintrag["name"]))
+
+    def _tasten_mit(self, typ: str) -> list[int]:
+        return [n for n in range(1, 7) if self._taste(n).get("aktion", {}).get("typ") == typ]
+
+    def ausgabe_pruefen(self) -> None:
+        """Standard-Wiedergabegerät abgleichen – falls es woanders umgestellt wurde."""
+        tasten = self._tasten_mit("ausgabe_wechseln")
+        if not tasten:
+            return
+        try:
+            name = self.audio.aktuelle_ausgabe()
+        except Exception as e:
+            log(f"Ausgabegerät nicht lesbar: {e}")
+            return
+        if name != self.ausgabe:
+            self.ausgabe = name
+            for n in tasten:
+                self.pad.bild_setzen(n, self._ausgabe_bild(self._taste(n)["aktion"]))
 
     def _mikro_tasten(self) -> list[int]:
         return [n for n in range(1, 7) if self._taste(n).get("aktion", {}).get("typ") == "mikro"]
@@ -137,6 +173,22 @@ class App:
             elif typ == "starten":
                 log(f"Starte: {aktion['befehl']}")
                 self.fenster.starten(aktion["befehl"])
+
+            elif typ == "ausgabe_wechseln":
+                geraete = aktion.get("geraete", [])
+                if not geraete:
+                    return
+                aktuell = self._ausgabe_eintrag(aktion)
+                index = geraete.index(aktuell) + 1 if aktuell in geraete else 0
+                ziel = geraete[index % len(geraete)]
+                name = self.audio.ausgabe_setzen(ziel["name"])
+                if name is None:
+                    log(f"Ausgabegerät „{ziel['name']}“ nicht gefunden. Vorhanden: "
+                        + ", ".join(self.audio.ausgabe_namen()))
+                else:
+                    log(f"Ausgabe: {name}")
+                    self.ausgabe = None      # neu einlesen und Bild aktualisieren
+                    self.ausgabe_pruefen()
 
             elif typ == "tastenkuerzel":
                 from . import tasten
@@ -210,6 +262,12 @@ class App:
                         log("Mikrofone: " + ", ".join(self.audio.mikrofon_namen()))
                     except Exception as e:
                         log(f"Mikrofone nicht auflistbar: {e}")
+                if self._tasten_mit("ausgabe_wechseln"):
+                    try:
+                        self.ausgabe = self.audio.aktuelle_ausgabe()
+                        log("Ausgabegeräte: " + ", ".join(self.audio.ausgabe_namen()))
+                    except Exception as e:
+                        log(f"Ausgabegeräte nicht lesbar: {e}")
                 self.alle_bilder_senden()
                 self.status(True)
                 return True
@@ -253,6 +311,7 @@ class App:
                     self.ereignis(e)
                 if time.monotonic() >= naechste_pruefung:
                     self.mikro_pruefen()
+                    self.ausgabe_pruefen()
                     naechste_pruefung = time.monotonic() + MIKRO_PRUEFEN_SEKUNDEN
             except OSError:
                 log("Verbindung zum Pad verloren.")
