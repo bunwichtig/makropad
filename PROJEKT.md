@@ -124,8 +124,8 @@ makropad-tool/
 1. ✅ **Protokoll klären**: Befehle aus den Referenzprojekten dokumentieren und die USB-ID des eigenen Geräts prüfen
 2. ✅ **Grundgerüst**: Gerät verbinden, Tastendrücke und Regler im Terminal ausgeben
 3. ✅ **Displays**: Bilder auf die 6 Tasten senden, Helligkeit einstellen
-4. **Aktionen**: Tastenkürzel, Programme, Webseiten, Text
-5. **Audio**: System- und App-Lautstärke über die Regler
+4. ✅ **Aktionen** (Mikro, Fokus, Starten, Webseite – Tastenkürzel 4. **Aktionen** Text folgen): Tastenkürzel, Programme, Webseiten, Text
+5. ✅ **Audio**: System- und App-Lautstärke über die Regler
 6. **Profile**: Seiten, Knöpfe zum Umschalten, automatischer Wechsel je nach Programm
 7. **Tray & Autostart**
 8. **.exe-Build** per GitHub Actions
