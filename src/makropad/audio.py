@@ -79,3 +79,24 @@ def app_lautstaerke_aendern(prozesse: list[str], schritt: float) -> float | None
             neu = max(0.0, min(1.0, vol.GetMasterVolume() + schritt))
             vol.SetMasterVolume(neu, None)
     return neu
+
+
+def app_stumm_umschalten(prozesse: list[str]) -> bool | None:
+    """Schaltet die genannten Programme stumm bzw. wieder an.
+    Gibt den neuen Zustand zurück (True = stumm) oder None, wenn das Programm gerade keinen Ton hat."""
+    namen = {p.lower() for p in prozesse}
+    sitzungen = []
+    for sitzung in AudioUtilities.GetAllSessions():
+        if sitzung.Process is None:
+            continue
+        try:
+            if sitzung.Process.name().lower() in namen:
+                sitzungen.append(sitzung.SimpleAudioVolume)
+        except Exception:
+            continue
+    if not sitzungen:
+        return None
+    neu = not bool(sitzungen[0].GetMute())
+    for vol in sitzungen:
+        vol.SetMute(int(neu), None)
+    return neu

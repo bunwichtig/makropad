@@ -154,6 +154,13 @@ class App:
                 stumm = self.audio.system_stumm_umschalten()
                 log("Ton " + ("STUMM" if stumm else "AN"))
 
+            elif typ == "app_stumm":
+                stumm = self.audio.app_stumm_umschalten(aktion["prozesse"])
+                if stumm is None:
+                    log(f"{', '.join(aktion['prozesse'])}: gerade kein Ton aktiv")
+                else:
+                    log(f"{aktion['prozesse'][0]}: " + ("STUMM" if stumm else "Ton AN"))
+
             elif typ == "app_lautstaerke":
                 neu = self.audio.app_lautstaerke_aendern(
                     aktion["prozesse"], richtung * aktion.get("schritt", 0.02))

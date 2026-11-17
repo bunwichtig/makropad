@@ -1,14 +1,19 @@
 {
   "helligkeit": 60,
-
   "tasten": {
     "1": {
       "name": "Mikrofon an/aus",
-      "aktion": { "typ": "mikro", "tastenkuerzel": "strg+umschalt+m" }
+      "aktion": {
+        "typ": "mikro",
+        "tastenkuerzel": "strg+umschalt+m"
+      }
     },
     "2": {
       "name": "Discord nach vorne",
-      "anzeige": { "text": "Discord", "farbe": "#5865F2" },
+      "anzeige": {
+        "text": "Discord",
+        "farbe": "#5865F2"
+      },
       "aktion": {
         "typ": "fokus",
         "prozess": "Discord.exe",
@@ -17,7 +22,10 @@
     },
     "3": {
       "name": "EA App aus dem Tray",
-      "anzeige": { "text": "EA", "farbe": "#ff4747" },
+      "anzeige": {
+        "text": "EA",
+        "farbe": "#ff4747"
+      },
       "aktion": {
         "typ": "fokus",
         "prozess": "EADesktop.exe",
@@ -25,24 +33,54 @@
       }
     }
   },
-
   "knoepfe": {},
-
   "regler": {
     "links": {
-      "name": "Discord-Lautstärke",
-      "drehen": { "typ": "app_lautstaerke", "prozesse": ["Discord.exe"], "schritt": 0.02 }
-    },
-    "mitte": {
-      "name": "Gesamtlautstärke",
-      "drehen": { "typ": "system_lautstaerke", "schritt": 0.02 }
-    },
-    "rechts": {
-      "name": "Battlefield-Lautstärke",
+      "name": "Discord-Lautstärke (drücken = stumm)",
       "drehen": {
         "typ": "app_lautstaerke",
-        "prozesse": ["bf6.exe", "BF2042.exe", "bfv.exe", "bf1.exe"],
+        "prozesse": [
+          "Discord.exe"
+        ],
         "schritt": 0.02
+      },
+      "druecken": {
+        "typ": "app_stumm",
+        "prozesse": [
+          "Discord.exe"
+        ]
+      }
+    },
+    "mitte": {
+      "name": "Gesamtlautstärke (drücken = stumm)",
+      "drehen": {
+        "typ": "system_lautstaerke",
+        "schritt": 0.02
+      },
+      "druecken": {
+        "typ": "system_stumm"
+      }
+    },
+    "rechts": {
+      "name": "Battlefield-Lautstärke (drücken = stumm)",
+      "drehen": {
+        "typ": "app_lautstaerke",
+        "prozesse": [
+          "bf6.exe",
+          "BF2042.exe",
+          "bfv.exe",
+          "bf1.exe"
+        ],
+        "schritt": 0.02
+      },
+      "druecken": {
+        "typ": "app_stumm",
+        "prozesse": [
+          "bf6.exe",
+          "BF2042.exe",
+          "bfv.exe",
+          "bf1.exe"
+        ]
       }
     }
   }
