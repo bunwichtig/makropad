@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Makropad – Konfiguration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a20; --feld:#1f232b; --rand:#343a46; --linie:#262b34;
+    --text:#e8eaef; --leise:#9aa3b2; --akzent:#4f8cff; --gut:#7ee2a8; --schlecht:#ff8a8a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",Inter,system-ui,sans-serif}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;border-bottom:1px solid var(--linie)}
+  .titel{font-weight:700;font-size:18px}
+  .pill{font-size:12px;border-radius:999px;padding:4px 10px;background:#262b34;color:var(--leise)}
+  .pill.ok{background:#173326;color:var(--gut)}
+  .knopf{padding:10px 16px;border-radius:8px;border:1px solid var(--rand);background:transparent}
+  .knopf:hover{background:#1c2028}
+  .knopf.primaer{border:0;background:var(--akzent);color:#fff;font-weight:600}
+  .knopf.primaer:hover{background:#3d7af0}
+  .knopf.klein{padding:7px 12px;font-size:13px}
+  .knopf.gefahr{color:var(--schlecht)}
+  nav{display:flex;flex-wrap:wrap;gap:6px;padding:14px 28px 0;align-items:flex-end}
+  .tab{padding:9px 16px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--leise);border-radius:8px 8px 0 0}
+  .tab.aktiv{background:#1c2028;color:#fff;border-bottom-color:var(--akzent)}
+  .tab.neu{color:var(--akzent)}
+  main{display:flex;flex-wrap:wrap;gap:24px;padding:24px 28px 40px}
+  .bereich{background:var(--panel);border-radius:16px;padding:28px}
+  #geraet{flex:1 1 460px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+  #editor{flex:999 1 440px;min-width:0;max-width:600px;display:flex;flex-direction:column;gap:16px}
+  .pad{background:#14171c;border:1px solid #2b303a;border-radius:24px;padding:26px 32px;display:flex;flex-direction:column;align-items:center;gap:20px;box-shadow:0 20px 40px rgba(0,0,0,.35)}
+  .regler-reihe{display:flex;align-items:flex-end;gap:34px}
+  .regler{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0}
+  .regler .rad{border-radius:50%;border:3px solid #454c59;background:radial-gradient(circle at 35% 30%,#454c59,#2b303a)}
+  .regler.aktiv .rad{outline:3px solid var(--akzent);outline-offset:4px}
+  .regler span{font-size:11px;color:#c9ced8;max-width:100px;text-align:center;line-height:1.3}
+  .tasten{display:grid;grid-template-columns:repeat(3,78px);gap:14px}
+  .taste{width:78px;height:78px;border-radius:10px;border:0;padding:0;background:#000;overflow:hidden}
+  .taste canvas{width:100%;height:100%;display:block}
+  .taste.aktiv{outline:3px solid var(--akzent);outline-offset:3px}
+  .nav-knoepfe{display:flex;gap:14px}
+  .nav-knoepfe div{width:78px;height:30px;border-radius:8px;border:1px solid var(--rand);background:var(--feld);color:#c9ced8;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .hinweis{margin:0;font-size:13px;color:#8a93a3}
+  .kopf{display:flex;align-items:center;gap:14px}
+  .kopf canvas{width:60px;height:60px;border-radius:8px}
+  .kopf .klein{font-size:12px;color:var(--leise)}
+  .kopf .gross{font-size:20px;font-weight:600}
+  label.feld{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--leise);flex:1}
+  .feld input,.feld select{font-size:14px;color:var(--text);background:var(--feld);border:1px solid var(--rand);border-radius:8px;padding:10px 12px;width:100%}
+  .feld input.mono{font-family:Consolas,ui-monospace,monospace}
+  .zeile{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+  .check{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--text)}
+  .trenner{height:1px;background:var(--linie)}
+  .abschnitt{font-size:12px;color:var(--leise);text-transform:uppercase;letter-spacing:.06em}
+  .modi{display:flex;gap:8px;flex-wrap:wrap}
+  .modus{padding:8px 14px;border-radius:999px;border:1px solid var(--rand);background:transparent;font-size:13px}
+  .modus.aktiv{border-color:var(--akzent);background:#1d2a44}
+  .farben{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .farbe{width:28px;height:28px;border-radius:50%;border:2px solid var(--rand);padding:0}
+  .farbe.aktiv{border:3px solid #fff}
+  input[type=color]{width:34px;height:34px;border:0;background:none;padding:0}
+  .vorschau-symbol{display:flex;align-items:center;gap:12px}
+  .geraet-zeile{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:12px;align-items:end;background:#1a1e25;border-radius:10px;padding:12px}
+  .geraet-zeile canvas{width:60px;height:60px;border-radius:8px}
+  dialog{background:var(--panel);color:var(--text);border:1px solid var(--rand);border-radius:14px;padding:20px;width:min(820px,94vw);max-height:84vh}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  .raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;overflow:auto;max-height:56vh;margin-top:12px}
+  .raster button{height:64px;border-radius:8px;border:1px solid var(--rand);background:var(--feld);display:flex;align-items:center;justify-content:center}
+  .raster button:hover{border-color:var(--akzent)}
+  .liste{display:flex;flex-direction:column;gap:4px;overflow:auto;max-height:56vh;margin-top:12px}
+  .liste button{display:flex;align-items:center;gap:12px;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid transparent;background:var(--feld)}
+  .liste button:hover{border-color:var(--akzent)}
+  .liste img{width:32px;height:32px}
+  .liste small{color:var(--leise);display:block;font-size:11px}
+  #meldung{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#173326;color:var(--gut);padding:10px 18px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none}
+  #meldung.zeigen{opacity:1}
+  #meldung.fehler{background:#3a1717;color:var(--schlecht)}
+  .ungespeichert{color:#ffb27d;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span class="titel">Makropad</span>
+    <span id="status" class="pill">● Status …</span>
+    <span id="ungespeichert" class="ungespeichert" hidden>ungespeicherte Änderungen</span>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="knopf" id="verwerfen">Verwerfen</button>
+    <button class="knopf primaer" id="speichern">Speichern &amp; übernehmen</button>
+  </div>
+</header>
+<nav id="seiten" aria-label="Seiten"></nav>
+<main>
+  <section id="geraet" class="bereich" aria-label="Gerät">
+    <div class="pad">
+      <div class="regler-reihe" id="regler"></div>
+      <div class="tasten" id="tasten"></div>
+      <div class="nav-knoepfe" title="Die drei Knöpfe blättern durch die Seiten"><div>◀ Zurück</div><div>Vor ▶</div><div>Start</div></div>
+    </div>
+    <p class="hinweis">Klicke eine Taste oder einen Regler an, um ihn zu belegen.</p>
+    <button class="knopf klein" id="allgemein">Allgemein: Helligkeit</button>
+  </section>
+  <section id="editor" class="bereich" aria-label="Bearbeiten"></section>
+</main>
+
+<dialog id="symbolDialog">
+  <div class="zeile"><label class="feld">Symbol suchen (englisch, z. B. mic, music, game, chat, home)<input id="symbolSuche" autocomplete="off"></label><button class="knopf" onclick="symbolDialog.close()">Schließen</button></div>
+  <div class="raster" id="symbolRaster"></div>
+  <p class="hinweis" style="margin-top:10px">Symbole: Lucide (ISC-Lizenz)</p>
+</dialog>
+<dialog id="programmDialog">
+  <div class="zeile"><label class="feld">Laufendes Programm wählen<input id="programmSuche" autocomplete="off" placeholder="Filtern …"></label><button class="knopf" onclick="programmDialog.close()">Schließen</button></div>
+  <div class="liste" id="programmListe"></div>
+</dialog>
+<div id="meldung" role="status"></div>
+<input type="file" id="dateiWahl" accept="image/*" hidden>
+
+<script>
+"use strict";
+const TOKEN = new URLSearchParams(location.search).get("t");
+const api = (pfad, opt = {}) => fetch(pfad, {...opt, headers: {...(opt.headers || {}), "X-Token": TOKEN}});
+// Vergleich ohne leere Objekte (ein Klick auf eine leere Taste ist keine Änderung)
+const norm = o => JSON.stringify(o, (k, v) => (k !== "" && v && typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length) ? undefined : v);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const FARBEN = ["#5865F2","#2a9d55","#d62828","#e76f00","#1e6fd9","#8e5bd9","#e9c46a","#3c4043","#1b2838","#000000"];
+const AKTIONEN = {
+  "": "– keine –",
+  mikro: "Mikrofon an/aus",
+  fokus: "Programm nach vorne holen",
+  fokus_position: "Fenster nach Bildschirmseite nach vorne",
+  starten: "Programm / Datei starten",
+  webseite: "Webseite öffnen",
+  tastenkuerzel: "Tastenkürzel senden",
+  ausgabe_wechseln: "Audio-Ausgabe wechseln",
+  system_stumm: "Gesamtton stumm",
+  app_stumm: "Programm stumm",
+};
+const ALT_SYMBOLE = {lautsprecher: "speaker", headset: "headphones", freunde: "users", browser_links: "panel-left"};
+const DREHEN = {"": "– nichts –", system_lautstaerke: "Gesamtlautstärke", app_lautstaerke: "Lautstärke eines Programms"};
+const DRUECKEN = {"": "– nichts –", system_stumm: "Gesamtton stumm", app_stumm: "Programm stumm", mikro: "Mikrofon an/aus"};
+const REGLER = [["links", "Regler links", 54], ["mitte", "Großer Regler", 78], ["rechts", "Regler rechts", 54]];
+
+let cfg = null, original = "", seite = 0, auswahl = {art: "taste", nr: 1};
+let lucide = null, ausgaben = [];
+const bildCache = new Map();          // url → Image
+const neuZeichnen = new Set();        // Objekte (anzeige / Gerät), deren PNG beim Speichern neu entsteht
+
+// ---------- Laden ----------
+async function laden() {
+  cfg = await (await api("/api/config")).json();
+  original = norm(cfg);
+  seite = 0;
+  neuZeichnen.clear();
+  alles();
+}
+function geaendert() {
+  document.getElementById("ungespeichert").hidden = norm(cfg) === original && !neuZeichnen.size;
+}
+async function status() {
+  try {
+    const s = await (await api("/api/status")).json();
+    const el = document.getElementById("status");
+    el.textContent = s.verbunden ? "● AKP03E verbunden" : "● Pad nicht verbunden";
+    el.className = "pill" + (s.verbunden ? " ok" : "");
+  } catch { }
+}
+
+// ---------- Hilfen ----------
+const tastenDerSeite = () => (cfg.seiten[seite].tasten ??= {});
+const taste = nr => tastenDerSeite()[String(nr)] ?? {};
+function tasteSetzen(nr, obj) { tastenDerSeite()[String(nr)] = obj; }
+function bild(url) {
+  if (bildCache.has(url)) return bildCache.get(url);
+  const img = new Image();
+  const p = new Promise(ok => { img.onload = () => ok(img); img.onerror = () => ok(null); });
+  img.src = url;
+  bildCache.set(url, p);
+  return p;
+}
+function lucideBild(name) {
+  const inner = lucide?.icons[name];
+  if (!inner) return Promise.resolve(null);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+  return bild("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg));
+}
+const programmUrl = exe => `/api/programmsymbol?exe=${encodeURIComponent(exe)}&t=${TOKEN}`;
+
+// Zeichnet eine Kachel (120×120) aus einer Anzeige-Beschreibung
+async function kachelZeichnen(canvas, q) {
+  const c = canvas.getContext("2d"), G = 120;
+  canvas.width = canvas.height = G;
+  c.fillStyle = q?.farbe || "#000"; c.fillRect(0, 0, G, G);
+  if (!q) return;
+  const text = (q.text || "").trim();
+  let quelle = null, gross = 72;
+  if (q.modus === "symbol") quelle = await lucideBild(q.symbol);
+  if (q.modus === "programm" && q.exe) { quelle = await bild(programmUrl(q.exe)); gross = 84; }
+  if (q.modus === "bild" && q.daten) { quelle = await bild(q.daten); gross = G; }
+  if (q.modus === "bildpfad" && q.pfad) { quelle = await bild(`/${q.pfad}?t=${TOKEN}`); gross = G; }
+  if (quelle) {
+    const s = text && gross < G ? gross * 0.8 : gross;
+    const y = text && gross < G ? 10 : (G - s) / 2;
+    c.drawImage(quelle, (G - s) / 2, y, s, s);
+  }
+  if (text) {
+    c.fillStyle = q.textfarbe || "#fff";
+    c.textAlign = "center"; c.textBaseline = "middle";
+    let px = quelle && gross < G ? 20 : (text.length <= 2 ? 52 : text.length <= 4 ? 38 : 26);
+    c.font = `700 ${px}px "Segoe UI", Inter, sans-serif`;
+    while (c.measureText(text).width > G - 10 && px > 10) { px--; c.font = `700 ${px}px "Segoe UI", Inter, sans-serif`; }
+    c.fillText(text, G / 2, quelle && gross < G ? G - 18 : G / 2);
+  }
+}
+// Spezialkacheln, die das Programm selbst zeichnet
+async function vorschau(canvas, t) {
+  const a = t.aktion || {};
+  if (a.typ === "mikro") return kachelZeichnen(canvas, {modus: "symbol", symbol: "mic", farbe: "#2a9d55"});
+  if (a.typ === "ausgabe_wechseln") {
+    const g = (a.geraete || [])[0];
+    if (!g) return kachelZeichnen(canvas, {modus: "symbol", symbol: "speaker", farbe: "#555"});
+    return kachelZeichnen(canvas, g.quelle || {modus: "symbol", symbol: ALT_SYMBOLE[g.symbol] || "speaker", farbe: g.farbe});
+  }
+  const an = t.anzeige;
+  if (!an) return kachelZeichnen(canvas, null);
+  if (an.quelle) return kachelZeichnen(canvas, an.quelle);
+  if (an.bild) return kachelZeichnen(canvas, {modus: "bildpfad", pfad: an.bild});
+  if (an.symbol) return kachelZeichnen(canvas, {modus: "symbol",
+    symbol: ALT_SYMBOLE[an.symbol] || "square",
+    farbe: an.farbe});
+  return kachelZeichnen(canvas, {modus: "text", text: an.text, farbe: an.farbe, textfarbe: an.schriftfarbe});
+}
+
+// ---------- Darstellung ----------
+function alles() { seitenZeichnen(); padZeichnen(); editorZeichnen(); geaendert(); }
+
+function seitenZeichnen() {
+  const nav = document.getElementById("seiten");
+  nav.innerHTML = "";
+  cfg.seiten.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "tab" + (i === seite ? " aktiv" : "");
+    b.textContent = `${i + 1} · ${s.name || "Seite"}`;
+    b.title = "Doppelklick zum Umbenennen";
+    b.onclick = () => { seite = i; if (auswahl.art === "taste") auswahl = {art: "taste", nr: auswahl.nr}; alles(); };
+    b.ondblclick = () => seiteUmbenennen(i);
+    nav.append(b);
+  });
+  const neu = document.createElement("button");
+  neu.className = "tab neu"; neu.textContent = "+ Seite hinzufügen";
+  neu.onclick = () => { cfg.seiten.push({name: `Seite ${cfg.seiten.length + 1}`, tasten: {}}); seite = cfg.seiten.length - 1; alles(); };
+  nav.append(neu);
+}
+function seiteUmbenennen(i) {
+  const name = prompt("Name der Seite:", cfg.seiten[i].name || "");
+  if (name !== null && name.trim()) { cfg.seiten[i].name = name.trim(); alles(); }
+}
+
+function padZeichnen() {
+  const r = document.getElementById("regler");
+  r.innerHTML = "";
+  for (const [key, titel, groesse] of REGLER) {
+    const daten = cfg.regler[key] || {};
+    const b = document.createElement("button");
+    b.className = "regler" + (auswahl.art === "regler" && auswahl.nr === key ? " aktiv" : "");
+    b.setAttribute("aria-label", titel);
+    b.innerHTML = `<div class="rad" style="width:${groesse}px;height:${groesse}px"></div><span>${esc(daten.name || titel)}</span>`;
+    b.onclick = () => { auswahl = {art: "regler", nr: key}; alles(); };
+    r.append(b);
+  }
+  const t = document.getElementById("tasten");
+  t.innerHTML = "";
+  for (let nr = 1; nr <= 6; nr++) {
+    const b = document.createElement("button");
+    b.className = "taste" + (auswahl.art === "taste" && auswahl.nr === nr ? " aktiv" : "");
+    b.setAttribute("aria-label", `Taste ${nr}`);
+    b.title = taste(nr).name || `Taste ${nr} (leer)`;
+    const cv = document.createElement("canvas");
+    b.append(cv);
+    vorschau(cv, taste(nr));
+    b.onclick = () => { auswahl = {art: "taste", nr}; alles(); };
+    t.append(b);
+  }
+}
+
+// --- Formular-Bausteine ---
+function feld(label, wert, aendern, {mono = false, platzhalter = ""} = {}) {
+  const l = document.createElement("label"); l.className = "feld";
+  l.append(label);
+  const i = document.createElement("input");
+  i.value = wert ?? ""; i.placeholder = platzhalter; if (mono) i.className = "mono";
+  i.oninput = () => { aendern(i.value); geaendert(); };
+  i.onchange = () => padZeichnen();
+  l.append(i); return l;
+}
+function auswahlFeld(label, optionen, wert, aendern) {
+  const l = document.createElement("label"); l.className = "feld";
+  l.append(label);
+  const s = document.createElement("select");
+  for (const [k, v] of Object.entries(optionen)) { const o = document.createElement("option"); o.value = k; o.textContent = v; s.append(o); }
+  s.value = wert ?? "";
+  s.onchange = () => { aendern(s.value); alles(); };
+  l.append(s); return l;
+}
+function haken(label, wert, aendern) {
+  const l = document.createElement("label"); l.className = "check";
+  const i = document.createElement("input"); i.type = "checkbox"; i.checked = !!wert;
+  i.onchange = () => { aendern(i.checked); geaendert(); };
+  l.append(i, label); return l;
+}
+function zeile(...kinder) { const d = document.createElement("div"); d.className = "zeile"; d.append(...kinder); return d; }
+function knopf(text, klick, klasse = "knopf klein") { const b = document.createElement("button"); b.className = klasse; b.textContent = text; b.onclick = klick; return b; }
+function abschnitt(text) { const d = document.createElement("div"); d.className = "abschnitt"; d.textContent = text; return d; }
+function trenner() { const d = document.createElement("div"); d.className = "trenner"; return d; }
+const listeText = a => (a || []).join(", ");
+const textListe = s => s.split(",").map(x => x.trim()).filter(Boolean);
+
+function editorZeichnen() {
+  const e = document.getElementById("editor");
+  e.innerHTML = "";
+  if (auswahl.art === "taste") tasteEditor(e);
+  else if (auswahl.art === "regler") reglerEditor(e);
+  else allgemeinEditor(e);
+}
+
+function tasteEditor(e) {
+  const nr = auswahl.nr;
+  // Direkt am Objekt in cfg arbeiten (keine Kopie), damit Bild-Aufträge auf das richtige Objekt zeigen
+  const t = (tastenDerSeite()[String(nr)] ??= {});
+  const speichern = () => {};
+  t.aktion ??= {};
+  const kopf = document.createElement("div"); kopf.className = "kopf";
+  const cv = document.createElement("canvas"); vorschau(cv, t);
+  kopf.innerHTML = `<div><div class="klein">Seite ${seite + 1} · Taste ${nr}</div><div class="gross">${esc(t.name || "Leere Taste")}</div></div>`;
+  kopf.prepend(cv);
+  e.append(kopf);
+  e.append(feld("Name (nur zur Übersicht)", t.name, v => { t.name = v; speichern(); }));
+  e.append(auswahlFeld("Aktion", AKTIONEN, t.aktion.typ || "", v => { t.aktion = v ? {typ: v} : {}; speichern(); }));
+  const a = t.aktion;
+  const setz = (k, v) => { if (v === "" || v === false) delete a[k]; else a[k] = v; speichern(); };
+
+  if (a.typ === "mikro") {
+    e.append(feld("Zusätzlich Tastenkürzel senden (z. B. für Discord)", a.tastenkuerzel, v => setz("tastenkuerzel", v), {mono: true, platzhalter: "strg+umschalt+m"}));
+    e.append(hinweis("Die Anzeige ist automatisch: grün = an, rot = stumm."));
+  }
+  if (a.typ === "fokus" || a.typ === "fokus_position" || a.typ === "app_stumm") {
+    const feldName = a.typ === "app_stumm" ? "prozesse" : "prozess";
+    const wert = a.typ === "app_stumm" ? listeText(a.prozesse) : a.prozess;
+    const f = feld("Programm (Prozessname)", wert, v => setz(feldName, a.typ === "app_stumm" ? textListe(v) : v), {mono: true, platzhalter: "Discord.exe"});
+    e.append(zeile(f, knopf("Aus laufenden wählen …", () => programmWaehlen(p => {
+      setz(feldName, a.typ === "app_stumm" ? [p.name] : p.name);
+      if (!t.name) t.name = p.name.replace(/\.exe$/i, "");
+      if (!t.anzeige || t.anzeige.quelle?.modus === "programm" || !t.anzeige.quelle && !t.anzeige.text) {
+        t.anzeige = {quelle: {modus: "programm", exe: p.exe, farbe: t.anzeige?.quelle?.farbe || "#1f232b"}};
+        neuZeichnen.add(t.anzeige);
+      }
+      speichern(); alles();
+    }))));
+  }
+  if (a.typ === "fokus") {
+    e.append(feld("Startbefehl, falls das Fenster fehlt (optional)", a.starten, v => setz("starten", v), {mono: true, platzhalter: "steam://open/friends"}));
+    e.append(feld("Nur Fenster mit diesem Titel (optional)", Array.isArray(a.titel) ? listeText(a.titel) : a.titel, v => setz("titel", textListe(v).length ? textListe(v) : ""), {platzhalter: "Freunde, Friends"}));
+    e.append(haken("Aus dem Tray per Klick auf das Symbol holen (z. B. EA App)", a.tray_klick, v => setz("tray_klick", v)));
+  }
+  if (a.typ === "fokus_position") {
+    e.append(auswahlFeld("Bildschirmseite", {links: "links", rechts: "rechts"}, a.bereich || "links", v => setz("bereich", v)));
+  }
+  if (a.typ === "starten") e.append(feld("Programm, Datei oder Befehl", a.befehl, v => setz("befehl", v), {mono: true, platzhalter: "C:\\Programme\\…\\programm.exe"}));
+  if (a.typ === "webseite") e.append(feld("Adresse", a.url, v => setz("url", v), {platzhalter: "https://…"}));
+  if (a.typ === "tastenkuerzel") {
+    e.append(feld("Tasten, mit + verbunden", a.tasten, v => setz("tasten", v), {mono: true, platzhalter: "strg+umschalt+m"}));
+    e.append(hinweis("Namen: strg, umschalt, alt, win, a–z, 0–9, f1–f24, enter, esc, tab, leer, entf, pos1, ende, hoch, runter, links, rechts, play, weiter, zurück, stumm, lauter, leiser"));
+  }
+  if (a.typ === "ausgabe_wechseln") ausgabeEditor(e, t, a, speichern);
+
+  if (a.typ !== "mikro" && a.typ !== "ausgabe_wechseln") {
+    e.append(trenner(), abschnitt("Anzeige"));
+    anzeigeEditor(e, t, speichern);
+  }
+  e.append(trenner());
+  e.append(zeile(knopf("Taste leeren", () => { tasteSetzen(nr, {}); alles(); }, "knopf klein gefahr")));
+}
+
+function hinweis(text) { const p = document.createElement("p"); p.className = "hinweis"; p.textContent = text; return p; }
+
+// Anzeige-Editor: Text / Symbol / Programm-Symbol / eigenes Bild
+function anzeigeEditor(e, t, speichern, ziel = null) {
+  // ziel: Objekt, das die Quelle trägt (Taste: t.anzeige; Gerät: das Gerät selbst)
+  const traeger = ziel || (t.anzeige ??= {});
+  let q = traeger.quelle;
+  if (!q) {   // alte Einträge übernehmen
+    if (traeger.symbol) q = {modus: "symbol", symbol: ALT_SYMBOLE[traeger.symbol] || "square", farbe: traeger.farbe || "#3c4043"};
+    else if (traeger.text) q = {modus: "text", text: traeger.text, farbe: traeger.farbe || "#333333"};
+    else if (traeger.bild) q = {modus: "bildpfad", pfad: traeger.bild, farbe: "#000000"};
+    else q = {modus: "text", text: "", farbe: traeger.farbe || "#3c4043"};
+  }
+  const aendern = () => {
+    traeger.quelle = q;
+    if (!ziel) {
+      if (q.modus === "text") { delete traeger.bild; traeger.text = q.text || ""; traeger.farbe = q.farbe; delete traeger.symbol; neuZeichnen.delete(traeger); }
+      else { delete traeger.text; delete traeger.symbol; neuZeichnen.add(traeger); }
+    } else neuZeichnen.add(traeger);
+    speichern(); padZeichnen(); vorschauNeu(); geaendert();
+  };
+  const modi = document.createElement("div"); modi.className = "modi";
+  for (const [k, v] of [["text", "Text"], ["symbol", "Symbol"], ["programm", "Programm-Symbol"], ["bild", "Eigenes Bild"]]) {
+    const b = document.createElement("button");
+    b.className = "modus" + (q.modus === k || (k === "bild" && q.modus === "bildpfad") ? " aktiv" : "");
+    b.textContent = v;
+    b.onclick = () => {
+      if (k === "symbol") symbolWaehlen(name => { q = {...q, modus: "symbol", symbol: name}; aendern(); editorZeichnen(); });
+      else if (k === "programm") programmWaehlen(p => { q = {...q, modus: "programm", exe: p.exe}; aendern(); editorZeichnen(); });
+      else if (k === "bild") dateiWaehlen(daten => { q = {...q, modus: "bild", daten}; aendern(); editorZeichnen(); });
+      else { q = {...q, modus: "text"}; aendern(); editorZeichnen(); }
+    };
+    modi.append(b);
+  }
+  e.append(modi);
+  const vor = document.createElement("div"); vor.className = "vorschau-symbol";
+  const cv = document.createElement("canvas"); cv.style.cssText = "width:60px;height:60px;border-radius:8px";
+  vor.append(cv);
+  const vorschauNeu = () => kachelZeichnen(cv, q);
+  vorschauNeu();
+  e.append(vor);
+  e.append(feld(q.modus === "text" ? "Text" : "Beschriftung unter dem Symbol (optional)", q.text, v => { q.text = v; aendern(); }));
+  const farben = document.createElement("div"); farben.className = "farben";
+  for (const f of FARBEN) {
+    const b = document.createElement("button");
+    b.className = "farbe" + (q.farbe?.toLowerCase() === f.toLowerCase() ? " aktiv" : "");
+    b.style.background = f; b.setAttribute("aria-label", `Farbe ${f}`);
+    b.onclick = () => { q.farbe = f; aendern(); farben.querySelectorAll(".farbe").forEach(x => x.classList.remove("aktiv")); b.classList.add("aktiv"); };
+    farben.append(b);
+  }
+  const eigen = document.createElement("input"); eigen.type = "color"; eigen.value = q.farbe || "#3c4043"; eigen.title = "Eigene Farbe";
+  eigen.oninput = () => { q.farbe = eigen.value; aendern(); };
+  farben.append(eigen);
+  e.append(farben);
+}
+
+function ausgabeEditor(e, t, a, speichern) {
+  a.geraete ??= [];
+  e.append(hinweis("Jeder Druck schaltet zum nächsten Gerät. Die Taste zeigt das gerade aktive."));
+  a.geraete.forEach((g, i) => {
+    const box = document.createElement("div"); box.style.cssText = "display:flex;flex-direction:column;gap:10px;background:#1a1e25;border-radius:10px;padding:14px";
+    const opt = {"": "– Gerät wählen –"};
+    for (const n of ausgaben) opt[n] = n;
+    if (g.name && !Object.keys(opt).some(k => k.toLowerCase().includes(g.name.toLowerCase()))) opt[g.name] = g.name + " (nicht gefunden)";
+    const passend = Object.keys(opt).find(k => k && g.name && k.toLowerCase().includes(g.name.toLowerCase())) || "";
+    box.append(zeile(auswahlFeld(`Gerät ${i + 1}`, opt, passend, v => { g.name = v; speichern(); }),
+      knopf("Entfernen", () => { a.geraete.splice(i, 1); speichern(); alles(); }, "knopf klein gefahr")));
+    anzeigeEditor(box, t, speichern, g);
+    e.append(box);
+  });
+  e.append(zeile(knopf("+ Gerät hinzufügen", () => { a.geraete.push({name: "", quelle: {modus: "symbol", symbol: "headphones", farbe: "#e76f00"}}); neuZeichnen.add(a.geraete.at(-1)); speichern(); alles(); })));
+}
+
+function reglerEditor(e) {
+  const key = auswahl.nr;
+  const r = (cfg.regler[key] ??= {});
+  const speichern = () => {};
+  const titel = REGLER.find(x => x[0] === key)[1];
+  e.innerHTML = `<div class="kopf"><div><div class="klein">${esc(titel)} · gilt auf allen Seiten</div><div class="gross">${esc(r.name || titel)}</div></div></div>`;
+  e.append(feld("Name", r.name, v => { r.name = v; speichern(); }));
+  e.append(abschnitt("Drehen"));
+  r.drehen ??= {};
+  e.append(auswahlFeld("Aktion", DREHEN, r.drehen.typ || "", v => { r.drehen = v ? {typ: v, schritt: 0.02} : {}; speichern(); }));
+  if (r.drehen.typ === "app_lautstaerke") e.append(programmFeld(r.drehen, speichern));
+  if (r.drehen.typ) e.append(feld("Schritt pro Raste in %", Math.round((r.drehen.schritt ?? 0.02) * 100), v => { r.drehen.schritt = Math.max(1, Math.min(20, +v || 2)) / 100; speichern(); }));
+  e.append(trenner(), abschnitt("Drücken"));
+  r.druecken ??= {};
+  e.append(auswahlFeld("Aktion", DRUECKEN, r.druecken.typ || "", v => {
+    r.druecken = v ? {typ: v} : {};
+    if (v === "app_stumm" && r.drehen.prozesse) r.druecken.prozesse = [...r.drehen.prozesse];
+    speichern();
+  }));
+  if (r.druecken.typ === "app_stumm") e.append(programmFeld(r.druecken, speichern));
+}
+function programmFeld(ziel, speichern) {
+  const f = feld("Programme (Prozessnamen, mit Komma getrennt)", listeText(ziel.prozesse), v => { ziel.prozesse = textListe(v); speichern(); }, {mono: true, platzhalter: "Discord.exe"});
+  return zeile(f, knopf("Aus laufenden wählen …", () => programmWaehlen(p => {
+    ziel.prozesse = [...new Set([...(ziel.prozesse || []), p.name])]; speichern(); alles();
+  })));
+}
+
+function allgemeinEditor(e) {
+  e.innerHTML = `<div class="kopf"><div><div class="klein">Gilt für das ganze Pad</div><div class="gross">Allgemein</div></div></div>`;
+  const l = document.createElement("label"); l.className = "feld";
+  l.append(`Helligkeit der Displays: `);
+  const wert = document.createElement("strong"); wert.textContent = `${cfg.helligkeit ?? 60} %`; l.append(wert);
+  const r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.value = cfg.helligkeit ?? 60;
+  r.oninput = () => { cfg.helligkeit = +r.value; wert.textContent = `${r.value} %`; geaendert(); };
+  l.append(r); e.append(l);
+  e.append(hinweis("Die drei Knöpfe unter den Tasten blättern durch die Seiten: links zurück, Mitte vor, rechts zur Startseite."));
+  if (cfg.seiten.length > 1) e.append(zeile(knopf(`Seite ${seite + 1} „${cfg.seiten[seite].name}“ löschen`, () => {
+    if (confirm(`Seite „${cfg.seiten[seite].name}“ wirklich löschen?`)) { cfg.seiten.splice(seite, 1); seite = Math.max(0, seite - 1); alles(); }
+  }, "knopf klein gefahr"), knopf("Seite umbenennen", () => seiteUmbenennen(seite))));
+}
+
+// ---------- Dialoge ----------
+async function symbolWaehlen(fertig) {
+  const d = document.getElementById("symbolDialog"), such = document.getElementById("symbolSuche"), raster = document.getElementById("symbolRaster");
+  if (!lucide) { raster.textContent = "Lade Symbole …"; d.showModal(); lucide = await (await fetch("/lucide.json")).json(); }
+  const zeigen = () => {
+    const s = such.value.trim().toLowerCase();
+    const namen = Object.keys(lucide.icons).filter(n => !s || n.includes(s) || (lucide.tags[n] || []).some(t => t.includes(s))).slice(0, 400);
+    raster.innerHTML = "";
+    for (const n of namen) {
+      const b = document.createElement("button"); b.title = n;
+      b.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${lucide.icons[n]}</svg>`;
+      b.onclick = () => { d.close(); fertig(n); };
+      raster.append(b);
+    }
+  };
+  such.oninput = zeigen; zeigen();
+  if (!d.open) d.showModal();
+  such.focus();
+}
+async function programmWaehlen(fertig) {
+  const d = document.getElementById("programmDialog"), such = document.getElementById("programmSuche"), liste = document.getElementById("programmListe");
+  liste.textContent = "Lade laufende Programme …"; d.showModal();
+  const programme = await (await api("/api/programme")).json();
+  const zeigen = () => {
+    const s = such.value.trim().toLowerCase();
+    liste.innerHTML = "";
+    for (const p of programme.filter(p => !s || p.name.toLowerCase().includes(s) || p.exe.toLowerCase().includes(s))) {
+      const b = document.createElement("button");
+      b.innerHTML = `<img alt="" src="${programmUrl(p.exe)}" onerror="this.style.visibility='hidden'"><span>${esc(p.name)}<small>${esc(p.exe)}</small></span>`;
+      b.onclick = () => { d.close(); fertig(p); };
+      liste.append(b);
+    }
+  };
+  such.value = ""; such.oninput = zeigen; zeigen(); such.focus();
+}
+function dateiWaehlen(fertig) {
+  const w = document.getElementById("dateiWahl");
+  w.value = "";
+  w.onchange = () => {
+    const f = w.files[0]; if (!f) return;
+    const r = new FileReader(); r.onload = () => fertig(r.result); r.readAsDataURL(f);
+  };
+  w.click();
+}
+
+// ---------- Speichern ----------
+async function pngHochladen(q) {
+  const cv = document.createElement("canvas");
+  await kachelZeichnen(cv, q);
+  const blob = await new Promise(ok => cv.toBlob(ok, "image/png"));
+  const antwort = await (await api("/api/bild", {method: "POST", body: blob})).json();
+  return antwort.pfad;
+}
+async function speichern() {
+  const knopfS = document.getElementById("speichern");
+  knopfS.disabled = true;
+  try {
+    // Alle geänderten Bilder rendern und hochladen
+    for (const traeger of neuZeichnen) {
+      if (!traeger.quelle || traeger.quelle.modus === "text") continue;
+      traeger.bild = await pngHochladen(traeger.quelle);
+      if (traeger.quelle.modus === "bild") {   // Bilddaten nicht in der config speichern
+        traeger.quelle = {...traeger.quelle, modus: "bildpfad", pfad: traeger.bild};
+        delete traeger.quelle.daten;
+      }
+    }
+    neuZeichnen.clear();
+    const antwort = await api("/api/config", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(cfg)});
+    if (!antwort.ok) throw new Error((await antwort.json()).fehler || antwort.status);
+    original = norm(cfg);
+    meldung("Gespeichert – das Pad ist aktualisiert.");
+  } catch (err) {
+    meldung("Speichern fehlgeschlagen: " + err.message, true);
+  } finally {
+    knopfS.disabled = false; geaendert();
+  }
+}
+function meldung(text, fehler = false) {
+  const m = document.getElementById("meldung");
+  m.textContent = text; m.className = "zeigen" + (fehler ? " fehler" : "");
+  clearTimeout(meldung.t); meldung.t = setTimeout(() => m.className = "", 3500);
+}
+
+document.getElementById("speichern").onclick = speichern;
+document.getElementById("verwerfen").onclick = () => { if (confirm("Alle ungespeicherten Änderungen verwerfen?")) laden(); };
+document.getElementById("allgemein").onclick = () => { auswahl = {art: "allgemein"}; alles(); };
+window.addEventListener("beforeunload", ev => { if (norm(cfg) !== original) ev.preventDefault(); });
+
+(async () => {
+  await laden();
+  status(); setInterval(status, 3000);
+  try { ausgaben = await (await api("/api/ausgaben")).json(); if (!Array.isArray(ausgaben)) ausgaben = []; } catch { ausgaben = []; }
+  if (auswahl.art === "taste") editorZeichnen();
+  // Symbole im Hintergrund vorladen (für Vorschauen)
+  lucide = await (await fetch("/lucide.json")).json(); padZeichnen(); editorZeichnen();
+})();
+</script>
+</body>
+</html>

@@ -39,6 +39,7 @@ jobs:
           --noconsole
           --paths src
           --add-data "config.json;."
+          --add-data "src/makropad/ui;makropad/ui"
           --hidden-import pystray._win32
           --collect-submodules pycaw
           --collect-submodules comtypes

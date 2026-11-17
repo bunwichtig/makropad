@@ -121,7 +121,7 @@ class App:
             return bilder.ausgabe_symbol(anzeige["symbol"], anzeige.get("farbe"), anzeige.get("text", ""))
         if "bild" in anzeige:
             try:
-                return bilder.bild_kachel(anzeige["bild"])
+                return bilder.bild_kachel(self._pfad(anzeige["bild"]))
             except OSError:
                 log(f"Bild für Taste {nummer} nicht gefunden: {anzeige['bild']}")
         return bilder.text_kachel(anzeige.get("text", ""), anzeige.get("farbe", "#333333"),
@@ -131,6 +131,13 @@ class App:
         for nummer in range(1, 7):
             self.pad.bild_setzen(nummer, self._bild_fuer(nummer), sofort=False)
         self.pad.anzeigen()
+
+    def _pfad(self, pfad: str) -> str:
+        """Relative Pfade (z. B. bilder/abc.png) gelten ab dem Ordner der config.json."""
+        pfad = os.path.expandvars(pfad)
+        if os.path.isabs(pfad):
+            return pfad
+        return os.path.join(os.path.dirname(os.path.abspath(self.config_pfad)), pfad)
 
     def _ausgabe_eintrag(self, aktion: dict) -> dict | None:
         """Welcher Eintrag aus aktion['geraete'] ist gerade aktiv?"""
@@ -144,6 +151,11 @@ class App:
         eintrag = self._ausgabe_eintrag(aktion)
         if eintrag is None:
             return bilder.text_kachel("?", "#555555")
+        if eintrag.get("bild"):
+            try:
+                return bilder.bild_kachel(self._pfad(eintrag["bild"]))
+            except OSError:
+                pass
         return bilder.ausgabe_symbol(eintrag.get("symbol", ""), eintrag.get("farbe"),
                                      eintrag.get("text", eintrag["name"]))
 

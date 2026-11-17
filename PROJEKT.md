@@ -129,7 +129,7 @@ makropad-tool/
 6. ✅ **Seiten** (Knopf 1 = zurück, 2 = vor, 3 = Startseite; automatischer Wechsel je Programm folgt evtl.) – **Profile**: Seiten, Knöpfe zum Umschalten, automatischer Wechsel je nach Programm
 7. ✅ **Tray & Autostart** (sichtbar im Infobereich, Autostart per Menü)
 8. ✅ **.exe-Build** per GitHub Actions (Download unter Releases → „neueste“). Wegen Fehlalarmen von Windows Defender: Ordner-Build (`--onedir`) mit selbst übersetztem PyInstaller-Bootloader, läuft so ohne Warnung
-9. **Oberfläche** zum Belegen (Variante wird separat ausgewählt)
+9. ✅ **Oberfläche** zum Belegen – Variante A „Geräteansicht“: lokaler Mini-Webserver (nur 127.0.0.1, mit Zugangsschlüssel) im Edge-App-Fenster, Symbole aus Lucide (ISC) oder aus Programm-Icons, Kacheln werden im Browser gerendert und als PNG unter `bilder/` gespeichert
 
 ## 8. Offene Fragen
 

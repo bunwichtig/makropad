@@ -11,8 +11,9 @@ Projektplan, Funktionen und Fahrplan: [PROJEKT.md](PROJEKT.md)
 Unter **Releases → „Neueste Version“** liegt `makropad-windows.zip`. Entpacken und im Ordner `makropad` die `makropad.exe` starten: Das Programm erscheint im Infobereich, die `config.json` wird beim ersten Start neben der .exe angelegt.
 
 Rechtsklick auf das Tray-Symbol:
-- **Konfiguration bearbeiten**: öffnet die `config.json`
-- **Konfiguration neu laden**: übernimmt Änderungen sofort (auch per Doppelklick auf das Symbol)
+- **Konfiguration öffnen**: Oberfläche zum Belegen aller Seiten, Tasten und Regler (auch per Doppelklick aufs Symbol)
+- **config.json im Editor**: für Feinheiten von Hand
+- **Konfiguration neu laden**: nach Änderungen von Hand
 - **Protokoll anzeigen**
 - **Mit Windows starten**
 - **Beenden**
@@ -26,3 +27,8 @@ pip install -r requirements.txt
 python start.py             # Tray
 python start.py --konsole   # mit Ausgabe im Terminal
 ```
+
+
+## Lizenzen
+
+Symbole: [Lucide](https://lucide.dev) (ISC-Lizenz, siehe `src/makropad/ui/LUCIDE_LICENSE.txt`).

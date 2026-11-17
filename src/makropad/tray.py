@@ -106,8 +106,17 @@ def main() -> None:
 
     app = App(pfad, status=status)
 
+    konfig = None
+
     def config_oeffnen(*_):
-        os.startfile(pfad)  # öffnet im Standard-Editor
+        nonlocal konfig
+        from .konfig import KonfigServer
+        if konfig is None:
+            konfig = KonfigServer(app)
+        konfig.fenster_oeffnen()
+
+    def json_oeffnen(*_):
+        os.startfile(pfad)  # config.json im Standard-Editor
 
     def log_oeffnen(*_):
         if os.path.exists(log_pfad):
@@ -121,8 +130,9 @@ def main() -> None:
         icon.stop()
 
     icon.menu = pystray.Menu(
-        pystray.MenuItem("Konfiguration bearbeiten", config_oeffnen),
-        pystray.MenuItem("Konfiguration neu laden", lambda *_: app.neu_laden(), default=True),
+        pystray.MenuItem("Konfiguration öffnen", config_oeffnen, default=True),
+        pystray.MenuItem("Konfiguration neu laden", lambda *_: app.neu_laden()),
+        pystray.MenuItem("config.json im Editor", json_oeffnen),
         pystray.MenuItem("Protokoll anzeigen", log_oeffnen),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Mit Windows starten", autostart_umschalten,

@@ -29,7 +29,13 @@ def text_kachel(text: str, farbe: str = "#333333", schriftfarbe: str = "white") 
 
 
 def bild_kachel(pfad: str) -> Image.Image:
-    return Image.open(os.path.expandvars(pfad)).convert("RGB")
+    bild = Image.open(os.path.expandvars(pfad))
+    if bild.mode in ("RGBA", "LA", "P"):
+        bild = bild.convert("RGBA")
+        grund = Image.new("RGB", bild.size, "black")
+        grund.paste(bild, mask=bild.getchannel("A"))
+        return grund
+    return bild.convert("RGB")
 
 
 def leer() -> Image.Image:
