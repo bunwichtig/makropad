@@ -29,6 +29,36 @@ def _titel(hwnd) -> str:
     return puffer.value
 
 
+def _klasse(hwnd) -> str:
+    puffer = ctypes.create_unicode_buffer(256)
+    user32.GetClassNameW(hwnd, puffer, 256)
+    return puffer.value
+
+
+# Unsichtbare Hilfsfenster, die nie als Hauptfenster gelten
+HILFSFENSTER = ("TrayIconMessage", "PowerDummyWindow", "ClipboardView", "QEventDispatcher")
+
+
+def _pids(prozessname: str) -> set[int]:
+    return {p.pid for p in psutil.process_iter(["name"])
+            if (p.info["name"] or "").lower() == prozessname.lower()}
+
+
+def _alle_fenster(pids: set[int]) -> list[int]:
+    gefunden: list[int] = []
+
+    @EnumWindowsProc
+    def rueckruf(hwnd, _):
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        if pid.value in pids:
+            gefunden.append(hwnd)
+        return True
+
+    user32.EnumWindows(rueckruf, 0)
+    return gefunden
+
+
 def _fenster_von(prozessname: str, titel=None) -> list[tuple[int, bool]]:
     """Alle Hauptfenster (mit Titel, ohne Besitzer) des Prozesses: [(hwnd, sichtbar)].
     titel: optionaler Text (oder Liste), der im Fenstertitel vorkommen muss."""
@@ -44,6 +74,8 @@ def _fenster_von(prozessname: str, titel=None) -> list[tuple[int, bool]]:
         pid = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
         if pid.value in pids and not user32.GetWindow(hwnd, GW_OWNER):
+            if any(h in _klasse(hwnd) for h in HILFSFENSTER):
+                return True
             name = _titel(hwnd)
             if name and (not titel or any(t in name.lower() for t in titel)):
                 gefunden.append((hwnd, bool(user32.IsWindowVisible(hwnd))))
@@ -102,7 +134,33 @@ def _einblenden(hwnd: int) -> None:
     _nach_vorne(hwnd)
 
 
-def fokus(prozess: str, starten_befehl: str | None = None, titel=None) -> str:
+WM_APP = 0x8000
+QT_TRAY_NACHRICHT = WM_APP + 101      # MYWM_NOTIFYICON in Qt
+NIN_SELECT = 0x0400
+WM_LBUTTONDBLCLK = 0x0203
+
+
+def _tray_klick(prozess: str) -> bool:
+    """Simuliert einen Klick auf das Tray-Symbol eines Qt-Programms (z. B. EA App).
+    Qt empfängt Tray-Klicks über ein unsichtbares Fenster „QTrayIconMessageWindow“ –
+    dorthin schicken wir dieselbe Nachricht, die Windows bei einem echten Klick sendet."""
+    tray = [h for h in _alle_fenster(_pids(prozess)) if "TrayIconMessage" in _klasse(h)]
+    if not tray:
+        return False
+    for hwnd in tray:
+        user32.ShowWindow(hwnd, 0)  # SW_HIDE – falls es versehentlich sichtbar wurde
+    user32.AllowSetForegroundWindow(-1)
+    for nachricht in (NIN_SELECT, WM_LBUTTONDBLCLK):
+        for hwnd in tray:
+            user32.PostMessageW(hwnd, QT_TRAY_NACHRICHT, 0, nachricht)
+        for _ in range(10):
+            time.sleep(0.1)
+            if _hauptfenster([h for h, s in _fenster_von(prozess) if s]):
+                return True
+    return True
+
+
+def fokus(prozess: str, starten_befehl: str | None = None, titel=None, tray_klick: bool = False) -> str:
     """Holt das Programm nach vorne. Gibt zurück, was passiert ist (fürs Protokoll).
     1. Sichtbares Fenster vorhanden → nach vorne holen.
     2. Startbefehl vorhanden (z. B. steam://…, Discord-Updater) → ausführen;
@@ -114,6 +172,12 @@ def fokus(prozess: str, starten_befehl: str | None = None, titel=None) -> str:
         _nach_vorne(hwnd)
         return "sichtbares Fenster nach vorne geholt"
 
+    if tray_klick and _tray_klick(prozess):
+        hwnd = _sichtbares(prozess, titel)
+        if hwnd:
+            _nach_vorne(hwnd)
+            return "per Tray-Klick geöffnet"
+
     if starten_befehl:
         starten(starten_befehl)
         for _ in range(15):          # bis zu 1,5 s auf das Fenster warten
@@ -123,7 +187,8 @@ def fokus(prozess: str, starten_befehl: str | None = None, titel=None) -> str:
                 _nach_vorne(hwnd)
                 return "über Startbefehl geöffnet"
 
-    versteckt = _hauptfenster([h for h, s in _fenster_von(prozess, titel) if not s])
+    versteckt = None if tray_klick else _hauptfenster(
+        [h for h, s in _fenster_von(prozess, titel) if not s])
     if versteckt:
         _einblenden(versteckt)
         return f"verstecktes Fenster „{_titel(versteckt)}“ eingeblendet"
@@ -131,5 +196,6 @@ def fokus(prozess: str, starten_befehl: str | None = None, titel=None) -> str:
     if not psutil.pids() or not any((p.info["name"] or "").lower() == prozess.lower()
                                     for p in psutil.process_iter(["name"])):
         return "Programm läuft nicht"
-    namen = [f"„{_titel(h)}“ {_groesse(h)}" for h, _ in _fenster_von(prozess)]
+    namen = [f"„{_titel(h)}“ [{_klasse(h)}] {_groesse(h)}" for h in _alle_fenster(_pids(prozess))
+             if _titel(h)]
     return "kein passendes Fenster gefunden. Fenster des Programms: " + (", ".join(namen) or "keine")

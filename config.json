@@ -28,7 +28,8 @@
       },
       "aktion": {
         "typ": "fokus",
-        "prozess": "EADesktop.exe"
+        "prozess": "EADesktop.exe",
+        "tray_klick": true
       }
     },
     "4": {

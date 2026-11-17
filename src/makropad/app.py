@@ -169,7 +169,8 @@ class App:
                     self.pad.bild_setzen(n, bilder.mikro(self.mikro_stumm))
 
             elif typ == "fokus":
-                ergebnis = self.fenster.fokus(aktion["prozess"], aktion.get("starten"), aktion.get("titel"))
+                ergebnis = self.fenster.fokus(aktion["prozess"], aktion.get("starten"), aktion.get("titel"),
+                                              aktion.get("tray_klick", False))
                 log(f"Nach vorne: {aktion['prozess']} – {ergebnis}")
 
             elif typ == "starten":
