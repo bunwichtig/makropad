@@ -11,7 +11,7 @@ import pystray
 from PIL import Image, ImageDraw
 
 from . import app as app_modul
-from .app import App, log
+from .app import App, log, nur_einmal_starten
 
 NAME = "Makropad"
 AUTOSTART_SCHLUESSEL = r"Software\Microsoft\Windows\CurrentVersion\Run"
@@ -88,6 +88,11 @@ def symbol(verbunden: bool) -> Image.Image:
 
 
 def main() -> None:
+    if not nur_einmal_starten():
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(
+            None, "Makropad läuft bereits – siehe Symbol im Infobereich.", NAME, 0x40)
+        return
     log_pfad = os.path.join(programm_ordner(), "makropad.log")
     app_modul.LOG_DATEI = log_pfad
     pfad = config_pfad()

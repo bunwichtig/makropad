@@ -126,6 +126,7 @@ class App:
                     # z. B. Discord-Stummschaltung mit umschalten, damit sie dort angezeigt wird
                     from . import tasten
                     tasten.senden(aktion["tastenkuerzel"])
+                    log(f"Tastenkürzel gesendet: {aktion['tastenkuerzel']}")
                 for n in self._mikro_tasten():
                     self.pad.bild_setzen(n, bilder.mikro(self.mikro_stumm))
 
@@ -265,11 +266,29 @@ class App:
         self.status(False)
 
 
+def nur_einmal_starten() -> bool:
+    """Verhindert, dass zwei Makropad-Programme gleichzeitig laufen.
+    Sonst würde jeder Tastendruck doppelt ausgeführt (z. B. Mikro zweimal umgeschaltet = keine Änderung)."""
+    if os.name != "nt":
+        return True
+    import ctypes
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    global _MUTEX
+    _MUTEX = kernel32.CreateMutexW(None, False, "Local\\makropad-bunwichtig")
+    return ctypes.get_last_error() != 183  # ERROR_ALREADY_EXISTS
+
+
+_MUTEX = None
+
+
 def main() -> None:
     """Konsolen-Modus (zum Testen):  python start.py --konsole"""
     standard = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "config.json")
     pfade = [a for a in sys.argv[1:] if not a.startswith("--")]
     pfad = pfade[0] if pfade else os.path.normpath(standard)
+    if not nur_einmal_starten():
+        log("Makropad läuft bereits (z. B. im Infobereich). Bitte dort zuerst beenden.")
+        return
     log(f"Konfiguration: {pfad}")
     app = App(pfad)
     try:
