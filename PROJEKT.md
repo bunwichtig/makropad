@@ -30,7 +30,12 @@ Schlanke, quelloffene Windows-Software zur Steuerung des Makropads **AJAZZ AKP03
 - Tastenbilder in 60 px (v2) bzw. 64 px (v3)
 - Zum Leeren der Displays ist ein extra Befehl nötig
 - Das Gerät trennt sich nach ca. 35 s Stille → **Keepalive** nötig
-- Welche Protokollversion `0B00:1001` nutzt, wird in Phase 1 geklärt
+
+**Ergebnisse Phase 1 (17.11.2026, mit `tools/test_verbindung.py`):** ✅
+- **Protokollversion 2**: Antworten beginnen mit `ACK`, Byte 9 = Eingabe-Code, Byte 10 = immer 0 → es gibt nur „gedrückt“, kein „losgelassen“ (also kein langes Drücken)
+- Alle 15 Eingaben funktionieren: 6 Display-Tasten (`01`–`06`), 3 Knöpfe (`25`, `30`, `31`), Regler drehen (links `90`/`91`, mitte `50`/`51`, rechts `60`/`61`), Regler drücken (links `33`, mitte `35`, rechts `34`)
+- **Wichtig:** Die Display-Tasten senden erst, nachdem die Displays übernommen wurden (`CLE` an alle + `STP`). Vorher bleiben sie im Werksmodus.
+- Tastenbilder daher voraussichtlich 60 × 60 px JPEG
 
 ## 3. Protokoll
 
@@ -114,8 +119,8 @@ makropad-tool/
 
 ## 7. Fahrplan
 
-1. **Protokoll klären**: Befehle aus den Referenzprojekten dokumentieren und die USB-ID des eigenen Geräts prüfen
-2. **Grundgerüst**: Gerät verbinden, Tastendrücke und Regler im Terminal ausgeben
+1. ✅ **Protokoll klären**: Befehle aus den Referenzprojekten dokumentieren und die USB-ID des eigenen Geräts prüfen
+2. ✅ **Grundgerüst**: Gerät verbinden, Tastendrücke und Regler im Terminal ausgeben
 3. **Displays**: Bilder auf die 6 Tasten senden, Helligkeit einstellen
 4. **Aktionen**: Tastenkürzel, Programme, Webseiten, Text
 5. **Audio**: System- und App-Lautstärke über die Regler
@@ -127,7 +132,7 @@ makropad-tool/
 ## 8. Offene Fragen
 
 - ~~Genaue USB-ID des eigenen Geräts?~~ → `0B00:1001`
-- Protokollversion (v2 oder v3)?
+- ~~Protokollversion?~~ → v2 (siehe Ergebnisse Phase 1)
 - ~~Oberfläche?~~ → ja, wird eingeplant; Design in eigenem Thread (3 Varianten)
 - ~~Repo-Name?~~ → https://github.com/bunwichtig/makropad
 - Kommen weitere Funktionen dazu?
