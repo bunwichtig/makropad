@@ -120,7 +120,7 @@ class App:
         typ = aktion.get("typ")
         try:
             if typ == "mikro":
-                self.mikro_stumm = self.audio.mikro_umschalten()
+                self.mikro_stumm = self.audio.mikro_umschalten(protokoll=log)
                 log("Mikrofon " + ("STUMM" if self.mikro_stumm else "AN"))
                 if aktion.get("tastenkuerzel"):
                     # z. B. Discord-Stummschaltung mit umschalten, damit sie dort angezeigt wird
@@ -206,6 +206,10 @@ class App:
                 log("Pad verbunden.")
                 if self._mikro_tasten():
                     self.mikro_stumm = self.audio.mikro_ist_stumm()
+                    try:
+                        log("Mikrofone: " + ", ".join(self.audio.mikrofon_namen()))
+                    except Exception as e:
+                        log(f"Mikrofone nicht auflistbar: {e}")
                 self.alle_bilder_senden()
                 self.status(True)
                 return True

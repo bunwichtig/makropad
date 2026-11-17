@@ -4,11 +4,34 @@ from __future__ import annotations
 
 import ctypes
 import time
+from ctypes import wintypes
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 
 KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP = 0x0002
+INPUT_KEYBOARD = 1
+MAPVK_VK_TO_VSC = 0
+
+ULONG_PTR = ctypes.c_size_t
+
+
+class KEYBDINPUT(ctypes.Structure):
+    _fields_ = [("wVk", wintypes.WORD), ("wScan", wintypes.WORD), ("dwFlags", wintypes.DWORD),
+                ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
+
+
+class MOUSEINPUT(ctypes.Structure):
+    _fields_ = [("dx", wintypes.LONG), ("dy", wintypes.LONG), ("mouseData", wintypes.DWORD),
+                ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
+
+
+class _EINGABE(ctypes.Union):
+    _fields_ = [("ki", KEYBDINPUT), ("mi", MOUSEINPUT)]
+
+
+class INPUT(ctypes.Structure):
+    _fields_ = [("type", wintypes.DWORD), ("u", _EINGABE)]
 
 TASTEN = {
     # Zusatztasten (deutsch und englisch)
@@ -48,8 +71,14 @@ def _code(name: str) -> int:
 
 
 def _taste(code: int, loslassen: bool) -> None:
+    """Sendet die Taste mit virtuellem Code UND Scancode – manche Programme
+    (z. B. Discord-Tastenbelegungen) werten nur den Scancode aus."""
     flags = (KEYEVENTF_KEYUP if loslassen else 0) | (KEYEVENTF_EXTENDEDKEY if code in ERWEITERT else 0)
-    user32.keybd_event(code, 0, flags, 0)
+    scan = user32.MapVirtualKeyW(code, MAPVK_VK_TO_VSC)
+    eingabe = INPUT(type=INPUT_KEYBOARD)
+    eingabe.u.ki = KEYBDINPUT(wVk=code, wScan=scan, dwFlags=flags, time=0, dwExtraInfo=0)
+    if user32.SendInput(1, ctypes.byref(eingabe), ctypes.sizeof(INPUT)) != 1:
+        raise OSError(f"SendInput fehlgeschlagen (Fehler {ctypes.get_last_error()})")
 
 
 def senden(kuerzel: str) -> None:
@@ -57,8 +86,8 @@ def senden(kuerzel: str) -> None:
     codes = [_code(t) for t in kuerzel.split("+")]
     for c in codes:
         _taste(c, False)
-        time.sleep(0.01)
-    time.sleep(0.03)
+        time.sleep(0.03)
+    time.sleep(0.08)
     for c in reversed(codes):
         _taste(c, True)
-        time.sleep(0.01)
+        time.sleep(0.03)

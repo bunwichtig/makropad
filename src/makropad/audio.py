@@ -21,12 +21,26 @@ def _endpoint(fluss: EDataFlow, rolle: ERole):
     return cast(schnittstelle, POINTER(IAudioEndpointVolume))
 
 
-def _mikrofone():
-    """Standard-Mikrofon und Kommunikations-Mikrofon (oft dasselbe)."""
-    return [
-        _endpoint(EDataFlow.eCapture, ERole.eConsole),
-        _endpoint(EDataFlow.eCapture, ERole.eCommunications),
-    ]
+def _alle_mikrofone():
+    """Alle aktiven Aufnahmegeräte: [(Name, Lautstärke-Schnittstelle)]."""
+    enum = comtypes.CoCreateInstance(
+        CLSID_MMDeviceEnumerator, IMMDeviceEnumerator, comtypes.CLSCTX_INPROC_SERVER
+    )
+    sammlung = enum.EnumAudioEndpoints(EDataFlow.eCapture.value, 1)  # 1 = DEVICE_STATE_ACTIVE
+    ergebnis = []
+    for i in range(sammlung.GetCount()):
+        geraet = sammlung.Item(i)
+        try:
+            name = AudioUtilities.CreateDevice(geraet).FriendlyName
+        except Exception:
+            name = f"Gerät {i + 1}"
+        schnittstelle = geraet.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+        ergebnis.append((name, cast(schnittstelle, POINTER(IAudioEndpointVolume))))
+    return ergebnis
+
+
+def mikrofon_namen() -> list[str]:
+    return [name for name, _ in _alle_mikrofone()]
 
 
 # ---------- Mikrofon ----------
@@ -35,11 +49,19 @@ def mikro_ist_stumm() -> bool:
     return bool(_endpoint(EDataFlow.eCapture, ERole.eConsole).GetMute())
 
 
-def mikro_umschalten() -> bool:
-    """Schaltet das Mikrofon stumm bzw. wieder an. Gibt den neuen Zustand zurück (True = stumm)."""
+def mikro_umschalten(protokoll=None) -> bool:
+    """Schaltet ALLE aktiven Mikrofone stumm bzw. wieder an – so ist egal,
+    welches Gerät ein Programm gerade benutzt. Gibt den neuen Zustand zurück (True = stumm)."""
     neu = not mikro_ist_stumm()
-    for m in _mikrofone():
-        m.SetMute(int(neu), None)
+    for name, m in _alle_mikrofone():
+        try:
+            m.SetMute(int(neu), None)
+            ok = bool(m.GetMute()) == neu
+            if protokoll:
+                protokoll(f"  {name}: " + ("stumm" if neu else "an") + ("" if ok else " – FEHLGESCHLAGEN"))
+        except Exception as e:
+            if protokoll:
+                protokoll(f"  {name}: Fehler {e}")
     return neu
 
 
