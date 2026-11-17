@@ -12,6 +12,7 @@ import subprocess
 import threading
 import uuid
 import webbrowser
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -63,7 +64,10 @@ class KonfigServer:
             config = json.load(f)
         if "seiten" not in config:
             config["seiten"] = [{"name": "Start", "tasten": config.pop("tasten", {})}]
-        config.setdefault("navigation", {"zurueck": 1, "vor": 2, "start": 3})
+        from .app import ALTE_NAVIGATION, NAVIGATION
+        config.setdefault("navigation", dict(NAVIGATION))
+        if config["navigation"] == ALTE_NAVIGATION:
+            config["navigation"] = dict(NAVIGATION)
         config.setdefault("regler", {})
         return config
 
@@ -144,9 +148,11 @@ def _handler_fuer(konfig: KonfigServer):
                 return self._json({"verbunden": bool(app.pad._geraet), "seite": app.seite})
             if pfad == "/api/ausgaben":
                 try:
-                    return self._json(app_audio(konfig).ausgabe_namen())
+                    namen = COM.submit(lambda: konfig.app.audio.ausgabe_namen()).result(timeout=10)
+                    return self._json(namen)
                 except Exception as e:
-                    return self._json({"fehler": str(e)}, 500)
+                    log(f"Ausgabegeräte nicht lesbar: {e}")
+                    return self._json([])
             if pfad == "/api/programme":
                 from . import programmsymbole
                 return self._json(programmsymbole.laufende_programme())
@@ -188,11 +194,15 @@ def _handler_fuer(konfig: KonfigServer):
     return Handler
 
 
-def app_audio(konfig: KonfigServer):
-    # COM muss im Server-Thread initialisiert sein
+def _com_starten() -> None:
     try:
         import comtypes
         comtypes.CoInitialize()
     except Exception:
         pass
-    return konfig.app.audio
+
+
+# Audio-Abfragen (COM) laufen alle in EINEM dauerhaften Thread. Würden sie in den
+# kurzlebigen Anfrage-Threads laufen, könnten COM-Objekte nach dem Ende des Threads
+# freigegeben werden – das bringt das ganze Programm zum Absturz.
+COM = ThreadPoolExecutor(max_workers=1, initializer=_com_starten, thread_name_prefix="com")

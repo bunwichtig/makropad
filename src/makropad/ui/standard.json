@@ -2,8 +2,8 @@
   "helligkeit": 60,
   "navigation": {
     "zurueck": 1,
-    "vor": 2,
-    "start": 3
+    "start": 2,
+    "vor": 3
   },
   "seiten": [
     {

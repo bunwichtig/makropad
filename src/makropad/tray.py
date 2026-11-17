@@ -111,9 +111,13 @@ def main() -> None:
     def config_oeffnen(*_):
         nonlocal konfig
         from .konfig import KonfigServer
-        if konfig is None:
-            konfig = KonfigServer(app)
-        konfig.fenster_oeffnen()
+        try:
+            if konfig is None:
+                konfig = KonfigServer(app)
+            konfig.fenster_oeffnen()
+        except Exception as e:
+            import traceback
+            log(f"Konfiguration konnte nicht geöffnet werden: {e}\n{traceback.format_exc()}")
 
     def json_oeffnen(*_):
         os.startfile(pfad)  # config.json im Standard-Editor

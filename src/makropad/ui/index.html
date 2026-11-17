@@ -27,6 +27,8 @@
   .tab{padding:9px 16px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--leise);border-radius:8px 8px 0 0}
   .tab.aktiv{background:#1c2028;color:#fff;border-bottom-color:var(--akzent)}
   .tab.neu{color:var(--akzent)}
+  .tab.ziel{box-shadow:inset 3px 0 0 var(--akzent)}
+  .tab[draggable=true]{cursor:grab}
   main{display:flex;flex-wrap:wrap;gap:24px;padding:24px 28px 40px}
   .bereich{background:var(--panel);border-radius:16px;padding:28px}
   #geraet{flex:1 1 460px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
@@ -100,9 +102,9 @@
     <div class="pad">
       <div class="regler-reihe" id="regler"></div>
       <div class="tasten" id="tasten"></div>
-      <div class="nav-knoepfe" title="Die drei Knöpfe blättern durch die Seiten"><div>◀ Zurück</div><div>Vor ▶</div><div>Start</div></div>
+      <div class="nav-knoepfe" title="Die drei Knöpfe blättern durch die Seiten"><div>◀ Zurück</div><div>Start</div><div>Vor ▶</div></div>
     </div>
-    <p class="hinweis">Klicke eine Taste oder einen Regler an, um ihn zu belegen.</p>
+    <p class="hinweis">Klicke eine Taste oder einen Regler an, um ihn zu belegen. Seiten-Reiter lassen sich verschieben.</p>
     <button class="knopf klein" id="allgemein">Allgemein: Helligkeit &amp; Standardbelegung</button>
   </section>
   <section id="editor" class="bereich" aria-label="Bearbeiten"></section>
@@ -247,14 +249,28 @@ function seitenZeichnen() {
     b.className = "tab" + (i === seite ? " aktiv" : "");
     b.textContent = `${i + 1} · ${s.name || "Seite"}`;
     b.title = "Doppelklick zum Umbenennen";
-    b.onclick = () => { seite = i; if (auswahl.art === "taste") auswahl = {art: "taste", nr: auswahl.nr}; alles(); };
+    b.onclick = () => { seite = i; alles(); };
     b.ondblclick = () => seiteUmbenennen(i);
+    // Reihenfolge per Ziehen ändern
+    b.draggable = true;
+    b.ondragstart = ev => { ev.dataTransfer.setData("text/plain", String(i)); ev.dataTransfer.effectAllowed = "move"; };
+    b.ondragover = ev => { ev.preventDefault(); b.classList.add("ziel"); };
+    b.ondragleave = () => b.classList.remove("ziel");
+    b.ondrop = ev => { ev.preventDefault(); b.classList.remove("ziel"); seiteVerschieben(+ev.dataTransfer.getData("text/plain"), i); };
     nav.append(b);
   });
   const neu = document.createElement("button");
   neu.className = "tab neu"; neu.textContent = "+ Seite hinzufügen";
   neu.onclick = () => { cfg.seiten.push({name: `Seite ${cfg.seiten.length + 1}`, tasten: {}}); seite = cfg.seiten.length - 1; alles(); };
   nav.append(neu);
+}
+function seiteVerschieben(von, nach) {
+  if (von === nach || isNaN(von)) return;
+  const aktuell = cfg.seiten[seite];
+  const [s] = cfg.seiten.splice(von, 1);
+  cfg.seiten.splice(nach, 0, s);
+  seite = cfg.seiten.indexOf(aktuell);
+  alles();
 }
 function seiteUmbenennen(i) {
   const name = prompt("Name der Seite:", cfg.seiten[i].name || "");
@@ -495,11 +511,18 @@ function allgemeinEditor(e) {
   const r = document.createElement("input"); r.type = "range"; r.min = 0; r.max = 100; r.value = cfg.helligkeit ?? 60;
   r.oninput = () => { cfg.helligkeit = +r.value; wert.textContent = `${r.value} %`; geaendert(); };
   l.append(r); e.append(l);
-  e.append(hinweis("Die drei Knöpfe unter den Tasten blättern durch die Seiten: links zurück, Mitte vor, rechts zur Startseite."));
+  e.append(hinweis("Die drei Knöpfe unter den Tasten blättern durch die Seiten: links zurück, Mitte zur Startseite (Seite 1), rechts vor."));
   e.append(trenner(), abschnitt("Standardbelegung"));
   e.append(hinweis("Setzt alle Seiten, Tasten und Regler auf die eingerichtete Standardbelegung zurück (Mikro, Discord, EA, Ausgabe, Chrome links, Steam-Freunde; Regler: Discord, Gesamt, Battlefield). Die bisherige Datei bleibt als config.json.bak erhalten."));
   e.append(zeile(knopf("Standardbelegung wiederherstellen", standardLaden, "knopf")));
   e.append(trenner());
+  if (cfg.seiten.length > 1) {
+    e.append(abschnitt(`Seite ${seite + 1} „${cfg.seiten[seite].name}“`));
+    e.append(hinweis("Reihenfolge: Reiter oben mit der Maus ziehen – oder hier verschieben. Seite 1 ist die Startseite."));
+    const links = knopf("◀ nach vorne", () => seiteVerschieben(seite, seite - 1)); links.disabled = seite === 0;
+    const rechts = knopf("nach hinten ▶", () => seiteVerschieben(seite, seite + 1)); rechts.disabled = seite === cfg.seiten.length - 1;
+    e.append(zeile(links, rechts));
+  }
   if (cfg.seiten.length > 1) e.append(zeile(knopf(`Seite ${seite + 1} „${cfg.seiten[seite].name}“ löschen`, () => {
     if (confirm(`Seite „${cfg.seiten[seite].name}“ wirklich löschen?`)) { cfg.seiten.splice(seite, 1); seite = Math.max(0, seite - 1); alles(); }
   }, "knopf klein gefahr"), knopf("Seite umbenennen", () => seiteUmbenennen(seite))));

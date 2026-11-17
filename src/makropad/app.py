@@ -17,6 +17,9 @@ from . import bilder
 from .device import Ereignis, Makropad
 
 REGLER_NAMEN = {1: "links", 2: "mitte", 3: "rechts"}
+# Knöpfe unter den Tasten: links = zurück, Mitte = Startseite, rechts = vor
+NAVIGATION = {"zurueck": 1, "start": 2, "vor": 3}
+ALTE_NAVIGATION = {"zurueck": 1, "vor": 2, "start": 3}
 MIKRO_PRUEFEN_SEKUNDEN = 1.0
 
 
@@ -78,7 +81,9 @@ class App:
             config["seiten"] = [{"name": "Start", "tasten": config.pop("tasten", {})}]
         if not config["seiten"]:
             config["seiten"] = [{"name": "Start", "tasten": {}}]
-        config.setdefault("navigation", {"zurueck": 1, "vor": 2, "start": 3})
+        config.setdefault("navigation", dict(NAVIGATION))
+        if config["navigation"] == ALTE_NAVIGATION:
+            config["navigation"] = dict(NAVIGATION)
         self.config = config
         self.seite = min(getattr(self, "seite", 0), len(config["seiten"]) - 1)
 
