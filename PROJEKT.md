@@ -127,8 +127,8 @@ makropad-tool/
 4. ✅ **Aktionen**: Mikro, Programm nach vorne holen, Starten, Webseite (Tastenkürzel und Text folgen)
 5. ✅ **Audio**: System- und App-Lautstärke über die Regler
 6. **Profile**: Seiten, Knöpfe zum Umschalten, automatischer Wechsel je nach Programm
-7. **Tray & Autostart**
-8. **.exe-Build** per GitHub Actions
+7. ✅ **Tray & Autostart** (sichtbar im Infobereich, Autostart per Menü)
+8. ✅ **.exe-Build** per GitHub Actions (Download unter Releases → „neueste“)
 9. **Oberfläche** zum Belegen (Variante wird separat ausgewählt)
 
 ## 8. Offene Fragen

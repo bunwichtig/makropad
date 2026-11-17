@@ -1,0 +1,73 @@
+name: .exe bauen
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhängigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: .exe bauen
+        run: >
+          pyinstaller start.py
+          --name makropad
+          --onefile
+          --noconsole
+          --paths src
+          --add-data "config.json;."
+          --hidden-import pystray._win32
+          --collect-submodules pycaw
+          --collect-submodules comtypes
+
+      - name: Paket zusammenstellen
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory paket | Out-Null
+          Copy-Item dist\makropad.exe paket\
+          Copy-Item config.json paket\
+          Compress-Archive -Path paket\* -DestinationPath makropad-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: makropad-windows
+          path: paket/
+
+      - name: Download-Seite aktualisieren (Release "neueste")
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: neueste
+          name: Neueste Version (automatisch gebaut)
+          prerelease: true
+          make_latest: false
+          files: |
+            dist/makropad.exe
+            makropad-windows.zip
+          body: |
+            Automatisch gebaut aus dem aktuellen Stand von `main`.
+            Einfach **makropad.exe** herunterladen und starten. Die config.json wird beim ersten Start daneben angelegt.
+
+      - name: Release für Version
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/makropad.exe
+            makropad-windows.zip

@@ -1,10 +1,18 @@
-"""Startet das Makropad-Tool:  python start.py  [pfad\\zur\\config.json]"""
+"""Startet das Makropad-Tool.
+
+  python start.py             → läuft im Infobereich (Tray)
+  python start.py --konsole   → läuft im Terminal mit Ausgabe (zum Testen)
+"""
 
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
+if not getattr(sys, "frozen", False):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
-from makropad.app import main  # noqa: E402
+if "--konsole" in sys.argv:
+    from makropad.app import main
+else:
+    from makropad.tray import main
 
 main()

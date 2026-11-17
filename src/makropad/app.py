@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import threading
 import time
 import webbrowser
 
@@ -19,13 +20,30 @@ REGLER_NAMEN = {1: "links", 2: "mitte", 3: "rechts"}
 MIKRO_PRUEFEN_SEKUNDEN = 1.0
 
 
+LOG_DATEI: str | None = None
+
+
 def log(text: str) -> None:
-    print(time.strftime("%H:%M:%S"), text, flush=True)
+    zeile = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {text}"
+    if sys.stdout:
+        try:
+            print(zeile, flush=True)
+        except Exception:
+            pass
+    if LOG_DATEI:
+        try:
+            with open(LOG_DATEI, "a", encoding="utf-8") as f:
+                f.write(zeile + "\n")
+        except OSError:
+            pass
 
 
 class App:
-    def __init__(self, config_pfad: str) -> None:
+    def __init__(self, config_pfad: str, status=None) -> None:
         self.config_pfad = config_pfad
+        self.stopp = threading.Event()
+        self._neu_laden = threading.Event()
+        self.status = status or (lambda verbunden: None)
         self.config: dict = {}
         self.pad = Makropad()
         self.mikro_stumm: bool | None = None
@@ -156,26 +174,59 @@ class App:
 
     # ---------- Hauptschleife ----------
 
-    def verbinden(self) -> None:
-        while True:
+    def neu_laden(self) -> None:
+        """Von außen aufrufbar (z. B. aus dem Tray-Menü)."""
+        self._neu_laden.set()
+
+    def beenden(self) -> None:
+        self.stopp.set()
+
+    def verbinden(self) -> bool:
+        gemeldet = False
+        while not self.stopp.is_set():
             try:
                 self.pad.verbinden(self.config.get("helligkeit", 60))
                 log("Pad verbunden.")
                 if self._mikro_tasten():
                     self.mikro_stumm = self.audio.mikro_ist_stumm()
                 self.alle_bilder_senden()
-                return
+                self.status(True)
+                return True
             except Exception as e:
                 self.pad.trennen()
-                log(f"Warte auf Pad … ({e})")
-                time.sleep(3)
+                if not gemeldet:
+                    log(f"Warte auf Pad … ({e})")
+                    gemeldet = True
+                self.stopp.wait(3)
+        return False
 
     def laufen(self) -> None:
-        self.config_laden()
-        self.verbinden()
+        # COM (Audio) muss in jedem Thread einzeln initialisiert werden
+        try:
+            import comtypes
+            comtypes.CoInitialize()
+        except Exception:
+            pass
+
+        try:
+            self.config_laden()
+        except Exception as e:
+            log(f"config.json fehlerhaft: {e}")
+            self.config = {}
+        if not self.verbinden():
+            return
         naechste_pruefung = 0.0
-        while True:
+        while not self.stopp.is_set():
             try:
+                if self._neu_laden.is_set():
+                    self._neu_laden.clear()
+                    try:
+                        self.config_laden()
+                        self.pad.helligkeit(self.config.get("helligkeit", 60))
+                        self.alle_bilder_senden()
+                        log("Konfiguration neu geladen.")
+                    except ValueError as e:
+                        log(f"config.json fehlerhaft, alte Belegung bleibt: {e}")
                 e = self.pad.lesen(100)
                 if e:
                     self.ereignis(e)
@@ -184,16 +235,29 @@ class App:
                     naechste_pruefung = time.monotonic() + MIKRO_PRUEFEN_SEKUNDEN
             except OSError:
                 log("Verbindung zum Pad verloren.")
+                self.status(False)
                 self.pad.trennen()
-                time.sleep(1)
-                self.verbinden()
+                self.stopp.wait(1)
+                if not self.verbinden():
+                    break
+        # Aufräumen: Displays leeren
+        try:
+            self.pad.alle_leeren()
+        except Exception:
+            pass
+        self.pad.trennen()
+        self.status(False)
 
 
 def main() -> None:
+    """Konsolen-Modus (zum Testen):  python start.py --konsole"""
     standard = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "config.json")
-    pfad = sys.argv[1] if len(sys.argv) > 1 else os.path.normpath(standard)
+    pfade = [a for a in sys.argv[1:] if not a.startswith("--")]
+    pfad = pfade[0] if pfade else os.path.normpath(standard)
     log(f"Konfiguration: {pfad}")
+    app = App(pfad)
     try:
-        App(pfad).laufen()
+        app.laufen()
     except KeyboardInterrupt:
+        app.beenden()
         log("Beendet.")

@@ -6,11 +6,23 @@ Projektplan, Funktionen und Fahrplan: [PROJEKT.md](PROJEKT.md)
 
 > Status: in Entwicklung – Grundfunktionen laufen
 
-## Starten
+## Herunterladen
+
+Unter **Releases → „Neueste Version“** liegt die fertige `makropad.exe`. Einfach starten: Das Programm erscheint im Infobereich, die `config.json` wird beim ersten Start neben der .exe angelegt.
+
+Rechtsklick auf das Tray-Symbol:
+- **Konfiguration bearbeiten**: öffnet die `config.json`
+- **Konfiguration neu laden**: übernimmt Änderungen sofort (auch per Doppelklick auf das Symbol)
+- **Protokoll anzeigen**
+- **Mit Windows starten**
+- **Beenden**
+
+Die Hersteller-Software vorher beenden.
+
+## Entwicklung
 
 ```powershell
 pip install -r requirements.txt
-python start.py
+python start.py             # Tray
+python start.py --konsole   # mit Ausgabe im Terminal
 ```
-
-Die Belegung steht in `config.json`. Hersteller-Software vorher beenden.

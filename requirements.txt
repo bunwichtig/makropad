@@ -2,3 +2,4 @@ hidapi
 Pillow
 pycaw
 psutil
+pystray
