@@ -35,7 +35,9 @@ Schlanke, quelloffene Windows-Software zur Steuerung des Makropads **AJAZZ AKP03
 - **Protokollversion 2**: Antworten beginnen mit `ACK`, Byte 9 = Eingabe-Code, Byte 10 = immer 0 → es gibt nur „gedrückt“, kein „losgelassen“ (also kein langes Drücken)
 - Alle 15 Eingaben funktionieren: 6 Display-Tasten (`01`–`06`), 3 Knöpfe (`25`, `30`, `31`), Regler drehen (links `90`/`91`, mitte `50`/`51`, rechts `60`/`61`), Regler drücken (links `33`, mitte `35`, rechts `34`)
 - **Wichtig:** Die Display-Tasten senden erst, nachdem die Displays übernommen wurden (`CLE` an alle + `STP`). Vorher bleiben sie im Werksmodus.
-- Tastenbilder daher voraussichtlich 60 × 60 px JPEG
+- Tastenbilder: 60 × 60 px JPEG, ohne Drehung ✅ (Phase 3 getestet)
+- Anordnung der Display-Tasten: 1 oben links … 6 unten rechts
+- Helligkeit per `LIG` funktioniert
 
 ## 3. Protokoll
 
@@ -121,7 +123,7 @@ makropad-tool/
 
 1. ✅ **Protokoll klären**: Befehle aus den Referenzprojekten dokumentieren und die USB-ID des eigenen Geräts prüfen
 2. ✅ **Grundgerüst**: Gerät verbinden, Tastendrücke und Regler im Terminal ausgeben
-3. **Displays**: Bilder auf die 6 Tasten senden, Helligkeit einstellen
+3. ✅ **Displays**: Bilder auf die 6 Tasten senden, Helligkeit einstellen
 4. **Aktionen**: Tastenkürzel, Programme, Webseiten, Text
 5. **Audio**: System- und App-Lautstärke über die Regler
 6. **Profile**: Seiten, Knöpfe zum Umschalten, automatischer Wechsel je nach Programm
