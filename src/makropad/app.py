@@ -122,6 +122,10 @@ class App:
             if typ == "mikro":
                 self.mikro_stumm = self.audio.mikro_umschalten()
                 log("Mikrofon " + ("STUMM" if self.mikro_stumm else "AN"))
+                if aktion.get("tastenkuerzel"):
+                    # z. B. Discord-Stummschaltung mit umschalten, damit sie dort angezeigt wird
+                    from . import tasten
+                    tasten.senden(aktion["tastenkuerzel"])
                 for n in self._mikro_tasten():
                     self.pad.bild_setzen(n, bilder.mikro(self.mikro_stumm))
 
@@ -132,6 +136,11 @@ class App:
             elif typ == "starten":
                 log(f"Starte: {aktion['befehl']}")
                 self.fenster.starten(aktion["befehl"])
+
+            elif typ == "tastenkuerzel":
+                from . import tasten
+                log(f"Tastenkürzel: {aktion['tasten']}")
+                tasten.senden(aktion["tasten"])
 
             elif typ == "webseite":
                 log(f"Öffne: {aktion['url']}")

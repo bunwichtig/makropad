@@ -4,7 +4,7 @@
   "tasten": {
     "1": {
       "name": "Mikrofon an/aus",
-      "aktion": { "typ": "mikro" }
+      "aktion": { "typ": "mikro", "tastenkuerzel": "strg+umschalt+m" }
     },
     "2": {
       "name": "Discord nach vorne",
