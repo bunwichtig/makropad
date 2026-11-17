@@ -4,4 +4,13 @@ Eigene, quelloffene Windows-Software für das Makropad **AJAZZ AKP03E** (USB-ID 
 
 Projektplan, Funktionen und Fahrplan: [PROJEKT.md](PROJEKT.md)
 
-> Status: Planung
+> Status: in Entwicklung – Grundfunktionen laufen
+
+## Starten
+
+```powershell
+pip install -r requirements.txt
+python start.py
+```
+
+Die Belegung steht in `config.json`. Hersteller-Software vorher beenden.
