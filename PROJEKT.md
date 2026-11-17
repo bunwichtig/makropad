@@ -126,7 +126,7 @@ makropad-tool/
 3. ✅ **Displays**: Bilder auf die 6 Tasten senden, Helligkeit einstellen
 4. ✅ **Aktionen**: Mikro, Programm nach vorne holen, Starten, Webseite , Tastenkürzel (Text einfügen folgt)
 5. ✅ **Audio**: System- und App-Lautstärke über die Regler
-6. **Profile**: Seiten, Knöpfe zum Umschalten, automatischer Wechsel je nach Programm
+6. ✅ **Seiten** (Knopf 1 = zurück, 2 = vor, 3 = Startseite; automatischer Wechsel je Programm folgt evtl.) – **Profile**: Seiten, Knöpfe zum Umschalten, automatischer Wechsel je nach Programm
 7. ✅ **Tray & Autostart** (sichtbar im Infobereich, Autostart per Menü)
 8. ✅ **.exe-Build** per GitHub Actions (Download unter Releases → „neueste“). Wegen Fehlalarmen von Windows Defender: Ordner-Build (`--onedir`) mit selbst übersetztem PyInstaller-Bootloader, läuft so ohne Warnung
 9. **Oberfläche** zum Belegen (Variante wird separat ausgewählt)

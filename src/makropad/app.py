@@ -48,6 +48,7 @@ class App:
         self.pad = Makropad()
         self.mikro_stumm: bool | None = None
         self.ausgabe: str | None = None   # Name des aktuellen Wiedergabegeräts
+        self.seite = 0                    # aktuelle Seite (0 = Startseite)
         self._audio = None
         self._fenster = None
 
@@ -71,10 +72,40 @@ class App:
 
     def config_laden(self) -> None:
         with open(self.config_pfad, encoding="utf-8") as f:
-            self.config = json.load(f)
+            config = json.load(f)
+        # Altes Format (nur "tasten") → eine einzige Seite
+        if "seiten" not in config:
+            config["seiten"] = [{"name": "Start", "tasten": config.pop("tasten", {})}]
+        if not config["seiten"]:
+            config["seiten"] = [{"name": "Start", "tasten": {}}]
+        config.setdefault("navigation", {"zurueck": 1, "vor": 2, "start": 3})
+        self.config = config
+        self.seite = min(getattr(self, "seite", 0), len(config["seiten"]) - 1)
+
+    @property
+    def seiten(self) -> list:
+        return self.config.get("seiten", [{}])
 
     def _taste(self, nummer: int) -> dict:
-        return self.config.get("tasten", {}).get(str(nummer), {})
+        return self.seiten[self.seite].get("tasten", {}).get(str(nummer), {})
+
+    def seite_wechseln(self, ziel: int) -> None:
+        ziel %= len(self.seiten)
+        if ziel == self.seite:
+            return
+        self.seite = ziel
+        log(f"Seite {ziel + 1}: {self.seiten[ziel].get('name', '')}")
+        self.mikro_stumm = None if self._mikro_tasten() else self.mikro_stumm
+        self.ausgabe = None
+        # Zustände für die neue Seite einlesen, dann alle Bilder senden
+        try:
+            if self._mikro_tasten():
+                self.mikro_stumm = self.audio.mikro_ist_stumm()
+            if self._tasten_mit("ausgabe_wechseln"):
+                self.ausgabe = self.audio.aktuelle_ausgabe()
+        except Exception as e:
+            log(f"Zustand nicht lesbar: {e}")
+        self.alle_bilder_senden()
 
     def _bild_fuer(self, nummer: int):
         taste = self._taste(nummer)
@@ -238,6 +269,16 @@ class App:
         if e.art == "taste":
             aktion = self._taste(e.nummer).get("aktion")
         elif e.art == "knopf":
+            nav = self.config.get("navigation", {})
+            if e.nummer == nav.get("zurueck"):
+                self.seite_wechseln(self.seite - 1)
+                return
+            if e.nummer == nav.get("vor"):
+                self.seite_wechseln(self.seite + 1)
+                return
+            if e.nummer == nav.get("start"):
+                self.seite_wechseln(0)
+                return
             aktion = self.config.get("knoepfe", {}).get(str(e.nummer), {}).get("aktion")
         elif e.art == "regler":
             aktion = self.config.get("regler", {}).get(REGLER_NAMEN[e.nummer], {}).get("drehen")
