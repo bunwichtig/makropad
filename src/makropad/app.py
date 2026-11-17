@@ -222,7 +222,8 @@ class App:
                 log(f"Nach vorne: {aktion['prozess']} – {ergebnis}")
 
             elif typ == "fokus_position":
-                ergebnis = self.fenster.fokus_position(aktion["prozess"], aktion.get("bereich", "links"))
+                ergebnis = self.fenster.fokus_position(aktion["prozess"], aktion.get("bereich", "links"),
+                                                       aktion.get("starten"))
                 log(f"Nach vorne ({aktion.get('bereich', 'links')}): {aktion['prozess']} – {ergebnis}")
 
             elif typ == "starten":

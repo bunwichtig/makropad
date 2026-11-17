@@ -37,7 +37,8 @@
           "aktion": {
             "typ": "fokus",
             "prozess": "EADesktop.exe",
-            "tray_klick": true
+            "tray_klick": true,
+            "starten": "C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EADesktop.exe"
           }
         },
         "4": {
@@ -67,7 +68,8 @@
           "aktion": {
             "typ": "fokus_position",
             "prozess": "chrome.exe",
-            "bereich": "links"
+            "bereich": "links",
+            "starten": "chrome.exe"
           }
         },
         "6": {

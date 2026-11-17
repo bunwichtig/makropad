@@ -108,8 +108,12 @@ def starten(befehl: str) -> None:
         teile = [befehl.strip('"')]            # reiner Pfad, auch mit Leerzeichen
     else:
         teile = [t.strip('"') for t in shlex.split(befehl, posix=False)]
-    subprocess.Popen(teile, close_fds=True,
-                     creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
+    try:
+        subprocess.Popen(teile, close_fds=True,
+                         creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
+    except FileNotFoundError:
+        # z. B. "chrome.exe": Windows kennt registrierte Programme auch ohne Pfad
+        os.startfile(teile[0], arguments=" ".join(teile[1:])) if len(teile) > 1 else os.startfile(teile[0])
 
 
 def _groesse(hwnd) -> tuple[int, int]:
@@ -132,6 +136,21 @@ def _einblenden(hwnd: int) -> None:
     user32.ShowWindow(hwnd, SW_SHOW)
     user32.ShowWindow(hwnd, SW_RESTORE)
     _nach_vorne(hwnd)
+
+
+# Bekannte Installationsorte, falls kein Startbefehl eingetragen ist
+BEKANNTE_PFADE = {
+    "eadesktop.exe": r"%ProgramFiles%\Electronic Arts\EA Desktop\EA Desktop\EADesktop.exe",
+}
+
+
+def _ersatz_start(prozess: str) -> str | None:
+    """Startbefehl, wenn keiner eingetragen ist: bekannter Pfad oder der Programmname selbst
+    (Windows findet registrierte Programme wie chrome.exe auch ohne Pfad)."""
+    bekannt = BEKANNTE_PFADE.get(prozess.lower())
+    if bekannt and os.path.exists(os.path.expandvars(bekannt)):
+        return bekannt
+    return prozess
 
 
 WM_APP = 0x8000
@@ -167,6 +186,14 @@ def fokus(prozess: str, starten_befehl: str | None = None, titel=None, tray_klic
        laufende Programme holen sich dann meist selbst nach vorne.
     3. Sonst bzw. wenn das nicht hilft (z. B. EA App im Tray): verstecktes
        Hauptfenster direkt einblenden."""
+    if not _pids(prozess):
+        befehl = starten_befehl or _ersatz_start(prozess)
+        try:
+            starten(befehl)
+            return f"lief nicht – wird gestartet ({befehl})"
+        except OSError as e:
+            return f"lief nicht und ließ sich nicht starten ({befehl}): {e}"
+
     hwnd = _sichtbares(prozess, titel)
     if hwnd:
         _nach_vorne(hwnd)
@@ -178,7 +205,7 @@ def fokus(prozess: str, starten_befehl: str | None = None, titel=None, tray_klic
             _nach_vorne(hwnd)
             return "per Tray-Klick geöffnet"
 
-    if starten_befehl:
+    if starten_befehl and not tray_klick:
         starten(starten_befehl)
         for _ in range(15):          # bis zu 1,5 s auf das Fenster warten
             time.sleep(0.1)
@@ -221,7 +248,7 @@ def _rechteck(hwnd) -> tuple[int, int, int, int]:
     return r.left, r.top, r.right, r.bottom
 
 
-def fokus_position(prozess: str, bereich: str = "links") -> str:
+def fokus_position(prozess: str, bereich: str = "links", starten_befehl: str | None = None) -> str:
     """Holt das Fenster des Programms nach vorne, das im gewünschten Bereich des Bildschirms liegt
     (links/rechts = linke/rechte Hälfte der gesamten Bildschirmfläche, bei zwei Monitoren also
     der linke bzw. rechte Monitor). Liegen dort mehrere, gewinnt das oberste (zuletzt benutzte)."""
@@ -242,6 +269,13 @@ def fokus_position(prozess: str, bereich: str = "links") -> str:
             kandidaten.append(hwnd)
 
     if not kandidaten:
+        if not any(s for _, s in _fenster_von(prozess)):
+            befehl = starten_befehl or _ersatz_start(prozess)
+            try:
+                starten(befehl)
+                return f"kein Fenster offen – wird gestartet ({befehl})"
+            except OSError as e:
+                return f"kein Fenster offen, Start fehlgeschlagen ({befehl}): {e}"
         return f"kein Fenster im Bereich „{bereich}“ gefunden"
     _nach_vorne(kandidaten[0])
     return f"„{_titel(kandidaten[0])}“ nach vorne geholt"

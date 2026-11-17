@@ -370,6 +370,7 @@ function tasteEditor(e) {
     const f = feld("Programm (Prozessname)", wert, v => setz(feldName, a.typ === "app_stumm" ? textListe(v) : v), {mono: true, platzhalter: "Discord.exe"});
     e.append(zeile(f, knopf("Aus laufenden wählen …", () => programmWaehlen(p => {
       setz(feldName, a.typ === "app_stumm" ? [p.name] : p.name);
+      if (a.typ !== "app_stumm" && !a.starten) a.starten = p.exe;
       if (!t.name) t.name = p.name.replace(/\.exe$/i, "");
       if (!t.anzeige || t.anzeige.quelle?.modus === "programm" || !t.anzeige.quelle && !t.anzeige.text) {
         t.anzeige = {quelle: {modus: "programm", exe: p.exe, farbe: t.anzeige?.quelle?.farbe || "#1f232b"}};
@@ -379,12 +380,13 @@ function tasteEditor(e) {
     }))));
   }
   if (a.typ === "fokus") {
-    e.append(feld("Startbefehl, falls das Fenster fehlt (optional)", a.starten, v => setz("starten", v), {mono: true, platzhalter: "steam://open/friends"}));
+    e.append(feld("Starten, falls das Programm nicht läuft oder kein Fenster hat (optional)", a.starten, v => setz("starten", v), {mono: true, platzhalter: "Pfad zur .exe oder steam://open/friends"}));
     e.append(feld("Nur Fenster mit diesem Titel (optional)", Array.isArray(a.titel) ? listeText(a.titel) : a.titel, v => setz("titel", textListe(v).length ? textListe(v) : ""), {platzhalter: "Freunde, Friends"}));
     e.append(haken("Aus dem Tray per Klick auf das Symbol holen (z. B. EA App)", a.tray_klick, v => setz("tray_klick", v)));
   }
   if (a.typ === "fokus_position") {
     e.append(auswahlFeld("Bildschirmseite", {links: "links", rechts: "rechts"}, a.bereich || "links", v => setz("bereich", v)));
+    e.append(feld("Starten, falls kein Fenster offen ist (optional)", a.starten, v => setz("starten", v), {mono: true, platzhalter: "chrome.exe"}));
   }
   if (a.typ === "starten") e.append(feld("Programm, Datei oder Befehl", a.befehl, v => setz("befehl", v), {mono: true, platzhalter: "C:\\Programme\\…\\programm.exe"}));
   if (a.typ === "webseite") e.append(feld("Adresse", a.url, v => setz("url", v), {platzhalter: "https://…"}));
