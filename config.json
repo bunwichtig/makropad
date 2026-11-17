@@ -49,6 +49,22 @@
           }
         ]
       }
+    },
+    "6": {
+      "name": "Steam-Freundesliste nach vorne",
+      "anzeige": {
+        "symbol": "freunde",
+        "farbe": "#1b2838"
+      },
+      "aktion": {
+        "typ": "fokus",
+        "prozess": "steamwebhelper.exe",
+        "titel": [
+          "Freunde",
+          "Friends"
+        ],
+        "starten": "steam://open/friends"
+      }
     }
   },
   "knoepfe": {},

@@ -86,6 +86,8 @@ class App:
         anzeige = taste.get("anzeige")
         if not anzeige:
             return bilder.leer()
+        if "symbol" in anzeige:
+            return bilder.ausgabe_symbol(anzeige["symbol"], anzeige.get("farbe"), anzeige.get("text", ""))
         if "bild" in anzeige:
             try:
                 return bilder.bild_kachel(anzeige["bild"])
@@ -168,7 +170,7 @@ class App:
 
             elif typ == "fokus":
                 log(f"Nach vorne: {aktion['prozess']}")
-                self.fenster.fokus(aktion["prozess"], aktion.get("starten"))
+                self.fenster.fokus(aktion["prozess"], aktion.get("starten"), aktion.get("titel"))
 
             elif typ == "starten":
                 log(f"Starte: {aktion['befehl']}")

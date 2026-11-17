@@ -22,8 +22,19 @@ KEYEVENTF_KEYUP = 0x0002
 EnumWindowsProc = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
 
 
-def _fenster_von(prozessname: str) -> list[tuple[int, bool]]:
-    """Alle Hauptfenster (mit Titel, ohne Besitzer) des Prozesses: [(hwnd, sichtbar)]."""
+def _titel(hwnd) -> str:
+    laenge = user32.GetWindowTextLengthW(hwnd)
+    puffer = ctypes.create_unicode_buffer(laenge + 1)
+    user32.GetWindowTextW(hwnd, puffer, laenge + 1)
+    return puffer.value
+
+
+def _fenster_von(prozessname: str, titel=None) -> list[tuple[int, bool]]:
+    """Alle Hauptfenster (mit Titel, ohne Besitzer) des Prozesses: [(hwnd, sichtbar)].
+    titel: optionaler Text (oder Liste), der im Fenstertitel vorkommen muss."""
+    if isinstance(titel, str):
+        titel = [titel]
+    titel = [t.lower() for t in (titel or [])]
     pids = {p.pid for p in psutil.process_iter(["name"])
             if (p.info["name"] or "").lower() == prozessname.lower()}
     gefunden: list[tuple[int, bool]] = []
@@ -33,7 +44,8 @@ def _fenster_von(prozessname: str) -> list[tuple[int, bool]]:
         pid = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
         if pid.value in pids and not user32.GetWindow(hwnd, GW_OWNER):
-            if user32.GetWindowTextLengthW(hwnd) > 0:
+            name = _titel(hwnd)
+            if name and (not titel or any(t in name.lower() for t in titel)):
                 gefunden.append((hwnd, bool(user32.IsWindowVisible(hwnd))))
         return True
 
@@ -55,6 +67,11 @@ def _nach_vorne(hwnd: int) -> None:
 
 def starten(befehl: str) -> None:
     befehl = os.path.expandvars(befehl).strip()
+    # Gestartetes Programm darf sich selbst nach vorne holen
+    user32.AllowSetForegroundWindow(-1)  # ASFW_ANY
+    if "://" in befehl and not os.path.exists(befehl):
+        os.startfile(befehl)                  # z. B. steam://open/friends
+        return
     if os.path.isfile(befehl.strip('"')):
         teile = [befehl.strip('"')]            # reiner Pfad, auch mit Leerzeichen
     else:
@@ -63,13 +80,13 @@ def starten(befehl: str) -> None:
                      creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
 
 
-def fokus(prozess: str, starten_befehl: str | None = None) -> None:
+def fokus(prozess: str, starten_befehl: str | None = None, titel=None) -> None:
     """Holt das Programm nach vorne.
     1. Sichtbares Fenster vorhanden → nach vorne holen.
     2. Sonst (z. B. im Tray): Startbefehl ausführen – laufende Programme holen sich dann
        meist selbst nach vorne – und danach das Fenster suchen.
     3. Ohne Startbefehl: verstecktes Fenster direkt einblenden."""
-    fenster = _fenster_von(prozess)
+    fenster = _fenster_von(prozess, titel)
     sichtbar = [h for h, s in fenster if s]
     if sichtbar:
         _nach_vorne(sichtbar[0])
@@ -79,7 +96,7 @@ def fokus(prozess: str, starten_befehl: str | None = None) -> None:
         starten(starten_befehl)
         for _ in range(20):          # bis zu 2 s auf das Fenster warten
             time.sleep(0.1)
-            sichtbar = [h for h, s in _fenster_von(prozess) if s]
+            sichtbar = [h for h, s in _fenster_von(prozess, titel) if s]
             if sichtbar:
                 _nach_vorne(sichtbar[0])
                 return

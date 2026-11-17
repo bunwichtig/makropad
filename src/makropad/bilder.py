@@ -88,7 +88,19 @@ def headset(farbe: str = "#e76f00") -> Image.Image:
     return bild.resize((GROESSE, GROESSE), Image.LANCZOS)
 
 
-SYMBOLE = {"lautsprecher": lautsprecher, "headset": headset}
+def freunde(farbe: str = "#1b2838") -> Image.Image:
+    """Zwei Personen (z. B. Steam-Freundesliste)."""
+    bild, z, s = _gross(farbe)
+    hinten, vorne = "#66c0f4", "white"
+    z.ellipse((31 * s, 10 * s, 45 * s, 24 * s), fill=hinten)
+    z.pieslice((24 * s, 27 * s, 52 * s, 55 * s), start=180, end=360, fill=hinten)
+    z.ellipse((14 * s, 14 * s, 30 * s, 30 * s), fill=farbe)          # Rand um vordere Person
+    z.ellipse((16 * s, 16 * s, 28 * s, 28 * s), fill=vorne)
+    z.pieslice((6 * s, 32 * s, 38 * s, 64 * s), start=180, end=360, fill=vorne)
+    return bild.resize((GROESSE, GROESSE), Image.LANCZOS)
+
+
+SYMBOLE = {"lautsprecher": lautsprecher, "headset": headset, "freunde": freunde}
 
 
 def ausgabe_symbol(symbol: str, farbe: str | None = None, text: str = "") -> Image.Image:
