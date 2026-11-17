@@ -27,6 +27,8 @@
   .tab{padding:9px 16px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--leise);border-radius:8px 8px 0 0}
   .tab.aktiv{background:#1c2028;color:#fff;border-bottom-color:var(--akzent)}
   .tab.neu{color:var(--akzent)}
+  .tab-x{margin-left:10px;padding:0 5px;border-radius:4px;color:var(--leise);font-weight:600}
+  .tab-x:hover{background:#3a1f22;color:var(--schlecht)}
   .tab.ziel{box-shadow:inset 3px 0 0 var(--akzent)}
   .tab[draggable=true]{cursor:grab}
   main{display:flex;flex-wrap:wrap;gap:24px;padding:24px 28px 40px}
@@ -255,6 +257,13 @@ function seitenZeichnen() {
     const b = document.createElement("button");
     b.className = "tab" + (i === seite ? " aktiv" : "");
     b.textContent = `${i + 1} · ${s.name || "Seite"}`;
+    if (cfg.seiten.length > 1) {
+      const x = document.createElement("span");
+      x.className = "tab-x"; x.textContent = "×"; x.title = "Seite löschen";
+      x.setAttribute("role", "button"); x.setAttribute("aria-label", `Seite ${i + 1} löschen`);
+      x.onclick = ev => { ev.stopPropagation(); seiteLoeschen(i); };
+      b.append(x);
+    }
     b.title = "Doppelklick zum Umbenennen";
     b.onclick = () => { seite = i; alles(); };
     b.ondblclick = () => seiteUmbenennen(i);
@@ -270,6 +279,15 @@ function seitenZeichnen() {
   neu.className = "tab neu"; neu.textContent = "+ Seite hinzufügen";
   neu.onclick = () => { cfg.seiten.push({name: `Seite ${cfg.seiten.length + 1}`, tasten: {}}); seite = cfg.seiten.length - 1; alles(); };
   nav.append(neu);
+}
+function seiteLoeschen(i) {
+  if (cfg.seiten.length <= 1) return;
+  const name = cfg.seiten[i].name || `Seite ${i + 1}`;
+  const belegt = Object.values(cfg.seiten[i].tasten || {}).filter(t => t?.aktion?.typ).length;
+  if (!confirm(`Seite „${name}“ löschen?` + (belegt ? `\nDarauf sind ${belegt} Tasten belegt.` : "") + "\n\nWirksam erst nach „Speichern & übernehmen“.")) return;
+  cfg.seiten.splice(i, 1);
+  if (seite >= cfg.seiten.length || seite > i) seite = Math.max(0, seite - 1);
+  alles();
 }
 function seiteVerschieben(von, nach) {
   if (von === nach || isNaN(von)) return;
@@ -533,7 +551,7 @@ function allgemeinEditor(e) {
     e.append(zeile(links, rechts));
   }
   if (cfg.seiten.length > 1) e.append(zeile(knopf(`Seite ${seite + 1} „${cfg.seiten[seite].name}“ löschen`, () => {
-    if (confirm(`Seite „${cfg.seiten[seite].name}“ wirklich löschen?`)) { cfg.seiten.splice(seite, 1); seite = Math.max(0, seite - 1); alles(); }
+    seiteLoeschen(seite);
   }, "knopf klein gefahr"), knopf("Seite umbenennen", () => seiteUmbenennen(seite))));
 }
 
