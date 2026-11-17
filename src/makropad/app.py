@@ -173,6 +173,10 @@ class App:
                                               aktion.get("tray_klick", False))
                 log(f"Nach vorne: {aktion['prozess']} – {ergebnis}")
 
+            elif typ == "fokus_position":
+                ergebnis = self.fenster.fokus_position(aktion["prozess"], aktion.get("bereich", "links"))
+                log(f"Nach vorne ({aktion.get('bereich', 'links')}): {aktion['prozess']} – {ergebnis}")
+
             elif typ == "starten":
                 log(f"Starte: {aktion['befehl']}")
                 self.fenster.starten(aktion["befehl"])

@@ -199,3 +199,49 @@ def fokus(prozess: str, starten_befehl: str | None = None, titel=None, tray_klic
     namen = [f"„{_titel(h)}“ [{_klasse(h)}] {_groesse(h)}" for h in _alle_fenster(_pids(prozess))
              if _titel(h)]
     return "kein passendes Fenster gefunden. Fenster des Programms: " + (", ".join(namen) or "keine")
+
+
+# ---------- Fenster nach Bildschirmposition ----------
+
+class WINDOWPLACEMENT(ctypes.Structure):
+    _fields_ = [("length", wintypes.UINT), ("flags", wintypes.UINT), ("showCmd", wintypes.UINT),
+                ("ptMinPosition", wintypes.POINT), ("ptMaxPosition", wintypes.POINT),
+                ("rcNormalPosition", wintypes.RECT)]
+
+
+def _rechteck(hwnd) -> tuple[int, int, int, int]:
+    """Position des Fensters – bei minimierten Fenstern die Position vor dem Minimieren."""
+    if user32.IsIconic(hwnd):
+        wp = WINDOWPLACEMENT(length=ctypes.sizeof(WINDOWPLACEMENT))
+        user32.GetWindowPlacement(hwnd, ctypes.byref(wp))
+        r = wp.rcNormalPosition
+    else:
+        r = wintypes.RECT()
+        user32.GetWindowRect(hwnd, ctypes.byref(r))
+    return r.left, r.top, r.right, r.bottom
+
+
+def fokus_position(prozess: str, bereich: str = "links") -> str:
+    """Holt das Fenster des Programms nach vorne, das im gewünschten Bereich des Bildschirms liegt
+    (links/rechts = linke/rechte Hälfte der gesamten Bildschirmfläche, bei zwei Monitoren also
+    der linke bzw. rechte Monitor). Liegen dort mehrere, gewinnt das oberste (zuletzt benutzte)."""
+    x0 = user32.GetSystemMetrics(76)       # SM_XVIRTUALSCREEN
+    breite = user32.GetSystemMetrics(78)   # SM_CXVIRTUALSCREEN
+    mitte = x0 + breite / 2
+
+    # EnumWindows liefert die Fenster von oben nach unten (Z-Reihenfolge)
+    kandidaten = []
+    for hwnd, sichtbar in _fenster_von(prozess):
+        if not sichtbar:
+            continue
+        links, oben, rechts, unten = _rechteck(hwnd)
+        if rechts - links < 200 or unten - oben < 150:
+            continue
+        x = (links + rechts) / 2
+        if (bereich == "links" and x < mitte) or (bereich == "rechts" and x >= mitte):
+            kandidaten.append(hwnd)
+
+    if not kandidaten:
+        return f"kein Fenster im Bereich „{bereich}“ gefunden"
+    _nach_vorne(kandidaten[0])
+    return f"„{_titel(kandidaten[0])}“ nach vorne geholt"

@@ -100,7 +100,25 @@ def freunde(farbe: str = "#1b2838") -> Image.Image:
     return bild.resize((GROESSE, GROESSE), Image.LANCZOS)
 
 
-SYMBOLE = {"lautsprecher": lautsprecher, "headset": headset, "freunde": freunde}
+def browser_links(farbe: str = "#3c4043") -> Image.Image:
+    """Globus mit Pfeil nach links – Browserfenster auf der linken Seite."""
+    bild, z, s = _gross(farbe)
+    w, blau = "white", "#8ab4f8"
+    # Bildschirm-Umriss, linke Hälfte gefüllt
+    z.rounded_rectangle((5 * s, 9 * s, 55 * s, 45 * s), radius=3 * s, outline=w, width=2 * s)
+    z.rectangle((8 * s, 12 * s, 29 * s, 42 * s), fill=blau)
+    z.line((30 * s, 12 * s, 30 * s, 42 * s), fill=w, width=1 * s)
+    # Globus in der linken Hälfte
+    z.ellipse((11 * s, 19 * s, 26 * s, 34 * s), outline=farbe, width=2 * s)
+    z.ellipse((15 * s, 19 * s, 22 * s, 34 * s), outline=farbe, width=1 * s)
+    z.line((11 * s, 26.5 * s, 26 * s, 26.5 * s), fill=farbe, width=1 * s)
+    # Standfuß
+    z.line((30 * s, 45 * s, 30 * s, 50 * s), fill=w, width=2 * s)
+    z.line((22 * s, 51 * s, 38 * s, 51 * s), fill=w, width=2 * s)
+    return bild.resize((GROESSE, GROESSE), Image.LANCZOS)
+
+
+SYMBOLE = {"browser_links": browser_links, "lautsprecher": lautsprecher, "headset": headset, "freunde": freunde}
 
 
 def ausgabe_symbol(symbol: str, farbe: str | None = None, text: str = "") -> Image.Image:

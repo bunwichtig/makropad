@@ -50,6 +50,18 @@
         ]
       }
     },
+    "5": {
+      "name": "Chrome-Fenster links nach vorne",
+      "anzeige": {
+        "symbol": "browser_links",
+        "farbe": "#3c4043"
+      },
+      "aktion": {
+        "typ": "fokus_position",
+        "prozess": "chrome.exe",
+        "bereich": "links"
+      }
+    },
     "6": {
       "name": "Steam-Freundesliste nach vorne",
       "anzeige": {
