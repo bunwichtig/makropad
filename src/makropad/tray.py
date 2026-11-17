@@ -87,6 +87,41 @@ def symbol(verbunden: bool) -> Image.Image:
     return bild
 
 
+def diagnose_einrichten(ordner: str) -> None:
+    """Fehler und Abstürze protokollieren:
+    - Python-Fehler in allen Threads → makropad.log
+    - harte Abstürze (z. B. in Windows-Bibliotheken) → absturz.log mit dem Stand ALLER Threads"""
+    import faulthandler
+    import traceback
+
+    global _ABSTURZ_DATEI
+    _ABSTURZ_DATEI = open(os.path.join(ordner, "absturz.log"), "a", encoding="utf-8")
+    _ABSTURZ_DATEI.write(f"\n===== Start {__import__('time').strftime('%Y-%m-%d %H:%M:%S')} =====\n")
+    _ABSTURZ_DATEI.flush()
+    faulthandler.enable(file=_ABSTURZ_DATEI, all_threads=True)
+
+    def unbehandelt(art, wert, tb):
+        log("UNBEHANDELTER FEHLER:\n" + "".join(traceback.format_exception(art, wert, tb)))
+
+    def thread_fehler(args):
+        log(f"FEHLER im Thread {args.thread.name if args.thread else '?'}:\n"
+            + "".join(traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback)))
+
+    sys.excepthook = unbehandelt
+    threading.excepthook = thread_fehler
+
+
+_ABSTURZ_DATEI = None
+
+
+def version() -> str:
+    for basis in (getattr(sys, "_MEIPASS", ""), programm_ordner()):
+        pfad = os.path.join(basis, "version.txt")
+        if basis and os.path.exists(pfad):
+            return open(pfad, encoding="utf-8").read().strip()
+    return "Entwicklung"
+
+
 def main() -> None:
     if not nur_einmal_starten():
         import ctypes
@@ -95,8 +130,11 @@ def main() -> None:
         return
     log_pfad = os.path.join(programm_ordner(), "makropad.log")
     app_modul.LOG_DATEI = log_pfad
+    diagnose_einrichten(programm_ordner())
     pfad = config_pfad()
-    log(f"Start (Tray). Konfiguration: {pfad}")
+    import platform
+    log(f"Start (Tray), Version {version()}, Windows {platform.version()}, Python {platform.python_version()}")
+    log(f"Konfiguration: {pfad}")
 
     icon = pystray.Icon(NAME, symbol(False), f"{NAME} – warte auf Pad")
 
@@ -112,6 +150,7 @@ def main() -> None:
         nonlocal konfig
         from .konfig import KonfigServer
         try:
+            log("Menü: Konfiguration öffnen")
             if konfig is None:
                 konfig = KonfigServer(app)
             konfig.fenster_oeffnen()

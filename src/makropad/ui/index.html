@@ -124,6 +124,13 @@
 
 <script>
 "use strict";
+// Fehler der Oberfläche ins Protokoll (makropad.log) schicken
+function protokoll(text) {
+  try { fetch("/api/log", {method: "POST", headers: {"X-Token": new URLSearchParams(location.search).get("t")}, body: String(text)}); } catch { }
+}
+window.addEventListener("error", e => protokoll(`JS-Fehler: ${e.message} (${e.filename}:${e.lineno})`));
+window.addEventListener("unhandledrejection", e => protokoll(`JS-Fehler (async): ${e.reason?.stack || e.reason}`));
+protokoll("Oberfläche geladen: " + navigator.userAgent);
 const TOKEN = new URLSearchParams(location.search).get("t");
 const api = (pfad, opt = {}) => fetch(pfad, {...opt, headers: {...(opt.headers || {}), "X-Token": TOKEN}});
 // Vergleich ohne leere Objekte (ein Klick auf eine leere Taste ist keine Änderung)

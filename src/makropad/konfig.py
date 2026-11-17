@@ -53,8 +53,13 @@ class KonfigServer:
                      r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"):
             pfad = os.path.expandvars(edge)
             if os.path.exists(pfad):
-                subprocess.Popen([pfad, f"--app={url}", "--window-size=1320,900"])
+                log(f"Öffne Fenster mit Edge: {pfad}")
+                subprocess.Popen([pfad, f"--app={url}", "--window-size=1320,900"],
+                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, close_fds=True)
+                log("Edge gestartet.")
                 return
+        log("Edge nicht gefunden – öffne im Standardbrowser.")
         webbrowser.open(url)
 
     # ---------- Daten ----------
@@ -126,6 +131,30 @@ def _handler_fuer(konfig: KonfigServer):
             laenge = int(self.headers.get("Content-Length") or 0)
             return self.rfile.read(laenge) if laenge else b""
 
+        # ---------- Protokoll jeder Anfrage (Beginn + Ende) ----------
+        def handle_one_request(self):
+            import time as _t
+            beginn = _t.monotonic()
+            try:
+                super().handle_one_request()
+            except Exception as e:
+                log(f"HTTP-Fehler: {e}")
+                raise
+            finally:
+                if getattr(self, "command", None) and getattr(self, "path", None) and not self._still():
+                    pfad = self.path.split("?")[0]
+                    log(f"HTTP {self.command} {pfad} fertig ({int((_t.monotonic() - beginn) * 1000)} ms)")
+
+        def _still(self) -> bool:
+            # häufige Routine-Anfragen nicht protokollieren
+            return self.path.split("?")[0] in ("/api/status", "/api/log", "/favicon.ico")
+
+        def parse_request(self):
+            ok = super().parse_request()
+            if ok and not self._still():
+                log(f"HTTP {self.command} {self.path.split('?')[0]} …")
+            return ok
+
         # ---------- GET ----------
         def do_GET(self):
             url = urlparse(self.path)
@@ -148,17 +177,22 @@ def _handler_fuer(konfig: KonfigServer):
                 return self._json({"verbunden": bool(app.pad._geraet), "seite": app.seite})
             if pfad == "/api/ausgaben":
                 try:
+                    log("Lese Ausgabegeräte (COM-Thread) …")
                     namen = COM.submit(lambda: konfig.app.audio.ausgabe_namen()).result(timeout=10)
+                    log(f"Ausgabegeräte gelesen: {len(namen)}")
                     return self._json(namen)
                 except Exception as e:
                     log(f"Ausgabegeräte nicht lesbar: {e}")
                     return self._json([])
             if pfad == "/api/programme":
                 from . import programmsymbole
-                return self._json(programmsymbole.laufende_programme())
+                liste = programmsymbole.laufende_programme()
+                log(f"Laufende Programme: {len(liste)}")
+                return self._json(liste)
             if pfad == "/api/programmsymbol":
                 from . import programmsymbole
                 exe = (parse_qs(url.query).get("exe") or [""])[0]
+                log(f"Programmsymbol: {exe}")
                 bild = programmsymbole.symbol_aus_datei(exe) if exe else None
                 if bild is None:
                     return self._senden(404, b"", "text/plain")
@@ -177,6 +211,10 @@ def _handler_fuer(konfig: KonfigServer):
                     return self._json({"ok": True})
                 except Exception as e:
                     return self._json({"fehler": str(e)}, 400)
+            if pfad == "/api/log":
+                text = self._body().decode("utf-8", "replace")[:4000]
+                log(f"OBERFLÄCHE: {text}")
+                return self._json({"ok": True})
             if pfad == "/api/standard":
                 # Standardbelegung (mitgeliefert) wiederherstellen; alte Datei bleibt als .bak
                 with open(os.path.join(UI_ORDNER, "standard.json"), encoding="utf-8") as f:

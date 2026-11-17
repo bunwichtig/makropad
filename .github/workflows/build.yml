@@ -31,6 +31,10 @@ jobs:
           Pop-Location
           pip install C:\pyinstaller-src
 
+      - name: Version festhalten
+        shell: pwsh
+        run: '"$(Get-Date -Format yyyy-MM-dd) ${env:GITHUB_SHA}".Substring(0, 18) | Out-File -Encoding utf8NoBOM version.txt'
+
       - name: .exe bauen
         run: >
           pyinstaller start.py
@@ -39,6 +43,7 @@ jobs:
           --noconsole
           --paths src
           --add-data "config.json;."
+          --add-data "version.txt;."
           --add-data "src/makropad/ui;makropad/ui"
           --hidden-import pystray._win32
           --collect-submodules pycaw
