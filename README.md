@@ -8,7 +8,7 @@ Projektplan, Funktionen und Fahrplan: [PROJEKT.md](PROJEKT.md)
 
 ## Herunterladen
 
-Unter **Releases → „Neueste Version“** liegt die fertige `makropad.exe`. Einfach starten: Das Programm erscheint im Infobereich, die `config.json` wird beim ersten Start neben der .exe angelegt.
+Unter **Releases → „Neueste Version“** liegt `makropad-windows.zip`. Entpacken und im Ordner `makropad` die `makropad.exe` starten: Das Programm erscheint im Infobereich, die `config.json` wird beim ersten Start neben der .exe angelegt.
 
 Rechtsklick auf das Tray-Symbol:
 - **Konfiguration bearbeiten**: öffnet die `config.json`
