@@ -169,8 +169,8 @@ class App:
                     self.pad.bild_setzen(n, bilder.mikro(self.mikro_stumm))
 
             elif typ == "fokus":
-                log(f"Nach vorne: {aktion['prozess']}")
-                self.fenster.fokus(aktion["prozess"], aktion.get("starten"), aktion.get("titel"))
+                ergebnis = self.fenster.fokus(aktion["prozess"], aktion.get("starten"), aktion.get("titel"))
+                log(f"Nach vorne: {aktion['prozess']} – {ergebnis}")
 
             elif typ == "starten":
                 log(f"Starte: {aktion['befehl']}")

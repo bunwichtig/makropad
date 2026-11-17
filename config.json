@@ -28,8 +28,7 @@
       },
       "aktion": {
         "typ": "fokus",
-        "prozess": "EADesktop.exe",
-        "starten": "C:\\Program Files\\Electronic Arts\\EA Desktop\\EA Desktop\\EADesktop.exe"
+        "prozess": "EADesktop.exe"
       }
     },
     "4": {

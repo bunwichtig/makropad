@@ -80,27 +80,56 @@ def starten(befehl: str) -> None:
                      creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
 
 
-def fokus(prozess: str, starten_befehl: str | None = None, titel=None) -> None:
-    """Holt das Programm nach vorne.
+def _groesse(hwnd) -> tuple[int, int]:
+    r = wintypes.RECT()
+    user32.GetWindowRect(hwnd, ctypes.byref(r))
+    return r.right - r.left, r.bottom - r.top
+
+
+def _hauptfenster(kandidaten: list[int]) -> int | None:
+    """Das größte Fenster – kleine Hilfsfenster (Tray-Symbol, Meldungen) fallen raus."""
+    gross = [(w * h, hwnd) for hwnd in kandidaten for w, h in [_groesse(hwnd)] if w >= 200 and h >= 150]
+    return max(gross)[1] if gross else None
+
+
+def _sichtbares(prozess, titel) -> int | None:
+    return _hauptfenster([h for h, s in _fenster_von(prozess, titel) if s])
+
+
+def _einblenden(hwnd: int) -> None:
+    user32.ShowWindow(hwnd, SW_SHOW)
+    user32.ShowWindow(hwnd, SW_RESTORE)
+    _nach_vorne(hwnd)
+
+
+def fokus(prozess: str, starten_befehl: str | None = None, titel=None) -> str:
+    """Holt das Programm nach vorne. Gibt zurück, was passiert ist (fürs Protokoll).
     1. Sichtbares Fenster vorhanden → nach vorne holen.
-    2. Sonst (z. B. im Tray): Startbefehl ausführen – laufende Programme holen sich dann
-       meist selbst nach vorne – und danach das Fenster suchen.
-    3. Ohne Startbefehl: verstecktes Fenster direkt einblenden."""
-    fenster = _fenster_von(prozess, titel)
-    sichtbar = [h for h, s in fenster if s]
-    if sichtbar:
-        _nach_vorne(sichtbar[0])
-        return
+    2. Startbefehl vorhanden (z. B. steam://…, Discord-Updater) → ausführen;
+       laufende Programme holen sich dann meist selbst nach vorne.
+    3. Sonst bzw. wenn das nicht hilft (z. B. EA App im Tray): verstecktes
+       Hauptfenster direkt einblenden."""
+    hwnd = _sichtbares(prozess, titel)
+    if hwnd:
+        _nach_vorne(hwnd)
+        return "sichtbares Fenster nach vorne geholt"
 
     if starten_befehl:
         starten(starten_befehl)
-        for _ in range(20):          # bis zu 2 s auf das Fenster warten
+        for _ in range(15):          # bis zu 1,5 s auf das Fenster warten
             time.sleep(0.1)
-            sichtbar = [h for h, s in _fenster_von(prozess, titel) if s]
-            if sichtbar:
-                _nach_vorne(sichtbar[0])
-                return
-        return
+            hwnd = _sichtbares(prozess, titel)
+            if hwnd:
+                _nach_vorne(hwnd)
+                return "über Startbefehl geöffnet"
 
-    if fenster:
-        _nach_vorne(fenster[0][0])
+    versteckt = _hauptfenster([h for h, s in _fenster_von(prozess, titel) if not s])
+    if versteckt:
+        _einblenden(versteckt)
+        return f"verstecktes Fenster „{_titel(versteckt)}“ eingeblendet"
+
+    if not psutil.pids() or not any((p.info["name"] or "").lower() == prozess.lower()
+                                    for p in psutil.process_iter(["name"])):
+        return "Programm läuft nicht"
+    namen = [f"„{_titel(h)}“ {_groesse(h)}" for h, _ in _fenster_von(prozess)]
+    return "kein passendes Fenster gefunden. Fenster des Programms: " + (", ".join(namen) or "keine")
