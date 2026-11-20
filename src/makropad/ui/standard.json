@@ -113,13 +113,13 @@
       }
     },
     "mitte": {
-      "name": "Gesamtlautstärke (drücken = stumm)",
+      "name": "Aktives Programm (drücken = stumm)",
       "drehen": {
-        "typ": "system_lautstaerke",
+        "typ": "aktive_app_lautstaerke",
         "schritt": 0.02
       },
       "druecken": {
-        "typ": "system_stumm"
+        "typ": "aktive_app_stumm"
       }
     },
     "rechts": {

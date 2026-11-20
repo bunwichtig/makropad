@@ -153,8 +153,8 @@ const AKTIONEN = {
   app_stumm: "Programm stumm",
 };
 const ALT_SYMBOLE = {lautsprecher: "speaker", headset: "headphones", freunde: "users", browser_links: "panel-left"};
-const DREHEN = {"": "– nichts –", system_lautstaerke: "Gesamtlautstärke", app_lautstaerke: "Lautstärke eines Programms"};
-const DRUECKEN = {"": "– nichts –", system_stumm: "Gesamtton stumm", app_stumm: "Programm stumm", mikro: "Mikrofon an/aus"};
+const DREHEN = {"": "– nichts –", system_lautstaerke: "Gesamtlautstärke", aktive_app_lautstaerke: "Lautstärke des aktiven Programms (im Vordergrund)", app_lautstaerke: "Lautstärke eines bestimmten Programms"};
+const DRUECKEN = {"": "– nichts –", system_stumm: "Gesamtton stumm", aktive_app_stumm: "Aktives Programm stumm", app_stumm: "Bestimmtes Programm stumm", mikro: "Mikrofon an/aus"};
 const REGLER = [["links", "Regler links", 54], ["mitte", "Großer Regler", 78], ["rechts", "Regler rechts", 54]];
 
 let cfg = null, original = "", seite = 0, auswahl = {art: "taste", nr: 1};
@@ -540,7 +540,7 @@ function allgemeinEditor(e) {
   l.append(r); e.append(l);
   e.append(hinweis("Die drei Knöpfe unter den Tasten blättern durch die Seiten: links zurück, Mitte zur Startseite (Seite 1), rechts vor."));
   e.append(trenner(), abschnitt("Standardbelegung"));
-  e.append(hinweis("Setzt alle Seiten, Tasten und Regler auf die eingerichtete Standardbelegung zurück (Mikro, Discord, EA, Ausgabe, Chrome links, Steam-Freunde; Regler: Discord, Gesamt, Battlefield). Die bisherige Datei bleibt als config.json.bak erhalten."));
+  e.append(hinweis("Setzt alle Seiten, Tasten und Regler auf die eingerichtete Standardbelegung zurück (Mikro, Discord, EA, Ausgabe, Chrome links, Steam-Freunde; Regler: Discord, aktives Programm, Battlefield). Die bisherige Datei bleibt als config.json.bak erhalten."));
   e.append(zeile(knopf("Standardbelegung wiederherstellen", standardLaden, "knopf")));
   e.append(trenner());
   if (cfg.seiten.length > 1) {

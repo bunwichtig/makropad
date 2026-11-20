@@ -279,3 +279,35 @@ def fokus_position(prozess: str, bereich: str = "links", starten_befehl: str | N
         return f"kein Fenster im Bereich „{bereich}“ gefunden"
     _nach_vorne(kandidaten[0])
     return f"„{_titel(kandidaten[0])}“ nach vorne geholt"
+
+
+def aktives_programm() -> str | None:
+    """Prozessname des Programms im Vordergrund (z. B. "chrome.exe")."""
+    hwnd = user32.GetForegroundWindow()
+    if not hwnd:
+        return None
+    pid = wintypes.DWORD()
+    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+    try:
+        name = psutil.Process(pid.value).name()
+    except Exception:
+        return None
+    # Store-Apps laufen in einem Rahmenprozess – das eigentliche Programm ist ein Kindfenster
+    if name.lower() == "applicationframehost.exe":
+        kinder = []
+
+        @EnumWindowsProc
+        def rueckruf(kind, _):
+            k = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(kind, ctypes.byref(k))
+            if k.value != pid.value:
+                kinder.append(k.value)
+            return True
+
+        user32.EnumChildWindows(hwnd, rueckruf, 0)
+        for k in kinder:
+            try:
+                return psutil.Process(k).name()
+            except Exception:
+                pass
+    return name
